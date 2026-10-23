@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { FormatTemplate, ApplicationFormData } from '../types';
 import { type SaveResult } from '../utils/storage';
 import { collectDocumentIssues } from '../utils/validation';
@@ -15,6 +15,9 @@ import {
   AlignJustify,
   AlertTriangle
 } from 'lucide-react';
+
+/** 210mm at 96dpi — the fixed width of the A4 preview sheet below. */
+const A4_WIDTH_PX = 794;
 
 interface DocumentPreviewProps {
   template: FormatTemplate;
@@ -38,7 +41,39 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   const [isEditingBody, setIsEditingBody] = useState(false);
   const [copied, setCopied] = useState(false);
   const [zoomLevel, setZoomLevel] = useState<number>(100);
+  const [isZoomCustom, setIsZoomCustom] = useState(false);
+  const [sheetHeightPx, setSheetHeightPx] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [fontSize, setFontSize] = useState<'text-sm' | 'text-base' | 'text-lg'>('text-base');
+
+  const applyZoom = (next: number) => {
+    setIsZoomCustom(true);
+    setZoomLevel(next);
+  };
+
+  // A4 is 794 CSS px wide, so on a phone the sheet used to overflow past both
+  // edges with the left half unreachable — the preview looked like a blank page.
+  useEffect(() => {
+    const scroller = scrollRef.current;
+    if (!scroller) return;
+    const fit = () => {
+      const percent = Math.floor(((scroller.clientWidth - 12) / A4_WIDTH_PX) * 100);
+      setZoomLevel(Math.max(45, Math.min(100, percent)));
+    };
+    if (!isZoomCustom) fit();
+    window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
+  }, [isZoomCustom]);
+
+  useEffect(() => {
+    const sheet = documentRef.current;
+    if (!sheet || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(() => setSheetHeightPx(sheet.offsetHeight));
+    observer.observe(sheet);
+    return () => observer.disconnect();
+  }, []);
+
+  const zoomScale = zoomLevel / 100;
 
   const isEmployee = template.category === 'employee';
 
@@ -273,8 +308,12 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         // The zoom slider scales an ancestor; capture at true size so every
         // export is identical regardless of the on-screen zoom level.
         onclone: (doc) => {
-          const wrap = doc.querySelector('[data-zoom-wrap]') as HTMLElement | null;
-          if (wrap) wrap.style.transform = 'none';
+          doc.querySelectorAll('[data-zoom-wrap], [data-zoom-size]').forEach((node) => {
+            const el = node as HTMLElement;
+            el.style.transform = 'none';
+            el.style.width = 'auto';
+            el.style.height = 'auto';
+          });
         },
       });
 
@@ -398,18 +437,26 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
             </button>
           </div>
 
-          {/* Zoom Controls */}
-          <div className="hidden md:flex items-center gap-1 border border-slate-200 rounded-xl p-1 bg-slate-50">
+          {/* Zoom Controls — visible on phones too; they need it most. */}
+          <div className="flex items-center gap-1 border border-slate-200 rounded-xl p-1 bg-slate-50">
             <button
-              onClick={() => setZoomLevel((prev) => Math.max(80, prev - 10))}
+              onClick={() => applyZoom(Math.max(45, zoomLevel - 10))}
               className="p-1 hover:bg-white rounded-md text-slate-600"
+              title="ছোট করুন"
             >
               <ZoomOut className="w-3.5 h-3.5" />
             </button>
-            <span className="text-[11px] font-semibold text-slate-700 px-1">{zoomLevel}%</span>
             <button
-              onClick={() => setZoomLevel((prev) => Math.min(130, prev + 10))}
+              onClick={() => setIsZoomCustom(false)}
+              className="text-[11px] font-semibold text-slate-700 px-1 hover:text-emerald-800"
+              title="স্ক্রিন অনুযায়ী ফিট করুন"
+            >
+              {zoomLevel}%
+            </button>
+            <button
+              onClick={() => applyZoom(Math.min(150, zoomLevel + 10))}
               className="p-1 hover:bg-white rounded-md text-slate-600"
+              title="বড় করুন"
             >
               <ZoomIn className="w-3.5 h-3.5" />
             </button>
@@ -487,81 +534,68 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
       )}
 
       {/* Live A4 Document Sheet with Increased Side Margins (35mm) */}
-      <div className="overflow-x-auto pb-6 flex justify-center">
+      <div ref={scrollRef} data-preview-scroll="true" className="overflow-x-auto pb-6">
         <div
-          data-zoom-wrap="true"
-          style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top center' }}
-          className="transition-transform duration-150"
+          data-zoom-size="true"
+          style={{
+            width: A4_WIDTH_PX * zoomScale,
+            height: sheetHeightPx > 0 ? sheetHeightPx * zoomScale : undefined,
+          }}
+          className="mx-auto transition-[width,height] duration-150"
         >
           <div
-            ref={documentRef}
-            className={`w-[210mm] min-h-[297mm] pt-[22mm] pb-[22mm] px-[35mm] bg-white text-black shadow-lg rounded-sm border border-slate-200/60 leading-[1.85] font-serif-bn ${fontSize} print-only-container application-sheet`}
-            style={{
-              boxSizing: 'border-box',
-            }}
+            data-zoom-wrap="true"
+            style={{ transform: `scale(${zoomScale})`, transformOrigin: 'top left' }}
+            className="transition-transform duration-150"
           >
-            
-            {/* Top Template Title (Left-Aligned, no 'ব্যবস্থাপক') */}
-            <div className="text-left font-bold text-[18px] text-black mb-8 leading-normal font-sans-bn">
-              {template.title.replace(/\/?ব্যবস্থাপক/g, '')}
-            </div>
-
-            {/* 1. Date - Left Aligned in DD/MM/YYYY (e.g., ২২/১০/২০২৬) */}
-            <div className="text-left font-sans-bn text-[15px] mb-5">
-              তারিখ: <span className="font-semibold">{toBanglaDate(formData.date || getTodayISODate())}</span>
-            </div>
-
-            {/* 2. Recipient Information - Strictly Left Aligned, no 'ব্যবস্থাপক' */}
-            <div className="text-left space-y-0.5 mb-5 font-serif-bn">
-              <div>বরাবর,</div>
-              <div className="font-bold text-[16px]">{getRecipientDisplay()}</div>
-              {formData.organization && <div>{formData.organization}</div>}
-              <div>
-                {[cleanUpazila, cleanDistrict].filter(Boolean).join(', ')}।
-              </div>
-            </div>
-
-            {/* 3. Through (মাধ্যম) - Left Aligned */}
-            {formData.through && formData.through !== 'সরাসরি' && (
-              <div className="text-left mb-5 font-semibold text-slate-900">
-                {formData.through.startsWith('মাধ্যম') ? formData.through : `মাধ্যম: ${formData.through}।`}
-              </div>
-            )}
-
-            {/* 4. Subject - Left Aligned */}
-            <div className="text-left font-bold text-[16px] mb-5">
-              বিষয়: {formData.subject || template.defaultSubject}
-            </div>
-
-            {/* 5. Salutation - Left Aligned */}
-            <div className="text-left mb-3 font-semibold">
-              {formData.salutation || 'মহোদয়,'}
-            </div>
-
-            {/* 6. Main Body Text - Strictly Justified Alignment */}
             <div
-              className="mb-5 leading-[2] text-black font-serif-bn"
+              ref={documentRef}
+              className={`w-[210mm] min-h-[297mm] pt-[22mm] pb-[22mm] px-[35mm] bg-white text-black shadow-lg rounded-sm border border-slate-200/60 leading-[1.85] font-serif-bn ${fontSize} print-only-container application-sheet`}
               style={{
-                textAlign: 'justify',
-                textJustify: 'inter-word',
-                textAlignLast: 'left',
+                boxSizing: 'border-box',
               }}
             >
-              <p
-                style={{
-                  textAlign: 'justify',
-                  textJustify: 'inter-word',
-                  textAlignLast: 'left',
-                }}
-              >
-                {mainBody}
-              </p>
-            </div>
+            
+              {/* Top Template Title (Left-Aligned, no 'ব্যবস্থাপক') */}
+              <div className="text-left font-bold text-[18px] text-black mb-8 leading-normal font-sans-bn">
+                {template.title.replace(/\/?ব্যবস্থাপক/g, '')}
+              </div>
 
-            {/* 7. Prayer Text (অতএব, ...) - Strictly Justified Alignment */}
-            {prayerText && (
+              {/* 1. Date - Left Aligned in DD/MM/YYYY (e.g., ২২/১০/২০২৬) */}
+              <div className="text-left font-sans-bn text-[15px] mb-5">
+                তারিখ: <span className="font-semibold">{toBanglaDate(formData.date || getTodayISODate())}</span>
+              </div>
+
+              {/* 2. Recipient Information - Strictly Left Aligned, no 'ব্যবস্থাপক' */}
+              <div className="text-left space-y-0.5 mb-5 font-serif-bn">
+                <div>বরাবর,</div>
+                <div className="font-bold text-[16px]">{getRecipientDisplay()}</div>
+                {formData.organization && <div>{formData.organization}</div>}
+                <div>
+                  {[cleanUpazila, cleanDistrict].filter(Boolean).join(', ')}।
+                </div>
+              </div>
+
+              {/* 3. Through (মাধ্যম) - Left Aligned */}
+              {formData.through && formData.through !== 'সরাসরি' && (
+                <div className="text-left mb-5 font-semibold text-slate-900">
+                  {formData.through.startsWith('মাধ্যম') ? formData.through : `মাধ্যম: ${formData.through}।`}
+                </div>
+              )}
+
+              {/* 4. Subject - Left Aligned */}
+              <div className="text-left font-bold text-[16px] mb-5">
+                বিষয়: {formData.subject || template.defaultSubject}
+              </div>
+
+              {/* 5. Salutation - Left Aligned */}
+              <div className="text-left mb-3 font-semibold">
+                {formData.salutation || 'মহোদয়,'}
+              </div>
+
+              {/* 6. Main Body Text - Strictly Justified Alignment */}
               <div
-                className="mb-6 leading-[2] text-black font-serif-bn"
+                className="mb-5 leading-[2] text-black font-serif-bn"
                 style={{
                   textAlign: 'justify',
                   textJustify: 'inter-word',
@@ -575,36 +609,58 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
                     textAlignLast: 'left',
                   }}
                 >
-                  {prayerText}
+                  {mainBody}
                 </p>
               </div>
-            )}
 
-            {/* 8. Closing & Signoff - Strictly Left Aligned */}
-            <div className="text-left pt-2 space-y-0.5 font-serif-bn">
-              <div className="font-semibold mb-5">নিবেদক,</div>
-              <div className="font-bold text-[16px] text-black">
-                {getVal(formData.applicantName, '[নাম]')}
+              {/* 7. Prayer Text (অতএব, ...) - Strictly Justified Alignment */}
+              {prayerText && (
+                <div
+                  className="mb-6 leading-[2] text-black font-serif-bn"
+                  style={{
+                    textAlign: 'justify',
+                    textJustify: 'inter-word',
+                    textAlignLast: 'left',
+                  }}
+                >
+                  <p
+                    style={{
+                      textAlign: 'justify',
+                      textJustify: 'inter-word',
+                      textAlignLast: 'left',
+                    }}
+                  >
+                    {prayerText}
+                  </p>
+                </div>
+              )}
+
+              {/* 8. Closing & Signoff - Strictly Left Aligned */}
+              <div className="text-left pt-2 space-y-0.5 font-serif-bn">
+                <div className="font-semibold mb-5">নিবেদক,</div>
+                <div className="font-bold text-[16px] text-black">
+                  {getVal(formData.applicantName, '[নাম]')}
+                </div>
+                <div>{getDesignationDisplay()}</div>
+                <div>{cleanWorkplace}</div>
+                <div>
+                  {[cleanUpazila, cleanDistrict].filter(Boolean).join(', ')}
+                </div>
+                {/* মোবাইল নম্বর বাংলা ডিজিটে কনভার্ট করা হয়েছে */}
+                <div>
+                  মোবাইল নম্বর: {formData.mobile ? toBanglaNumber(formData.mobile) : '[মোবাইল নম্বর:]'}
+                </div>
               </div>
-              <div>{getDesignationDisplay()}</div>
-              <div>{cleanWorkplace}</div>
-              <div>
-                {[cleanUpazila, cleanDistrict].filter(Boolean).join(', ')}
-              </div>
-              {/* মোবাইল নম্বর বাংলা ডিজিটে কনভার্ট করা হয়েছে */}
-              <div>
-                মোবাইল নম্বর: {formData.mobile ? toBanglaNumber(formData.mobile) : '[মোবাইল নম্বর:]'}
-              </div>
+
+              {/* 9. Attachments (সংযুক্তি) if any - Left Aligned */}
+              {formData.attachments && (
+                <div className="mt-8 pt-4 border-t border-slate-300 text-left text-xs font-sans-bn text-slate-800 space-y-1">
+                  <div className="font-bold text-slate-950">সংযুক্তি:</div>
+                  <div className="text-left">{formData.attachments}</div>
+                </div>
+              )}
+
             </div>
-
-            {/* 9. Attachments (সংযুক্তি) if any - Left Aligned */}
-            {formData.attachments && (
-              <div className="mt-8 pt-4 border-t border-slate-300 text-left text-xs font-sans-bn text-slate-800 space-y-1">
-                <div className="font-bold text-slate-950">সংযুক্তি:</div>
-                <div className="text-left">{formData.attachments}</div>
-              </div>
-            )}
-
           </div>
         </div>
       </div>

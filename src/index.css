@@ -110,6 +110,19 @@
     display: none !important;
   }
 
+  /* On-screen zoom must never leak into paper or "Save as PDF". */
+  [data-zoom-wrap],
+  [data-zoom-size] {
+    transform: none !important;
+    width: auto !important;
+    height: auto !important;
+  }
+
+  [data-preview-scroll] {
+    overflow: visible !important;
+    padding-bottom: 0 !important;
+  }
+
   .application-sheet,
   .print-only-container {
     box-shadow: none !important;
