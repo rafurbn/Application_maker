@@ -1,6 +1,0 @@
-{
-  "name": "আবেদনপত্র জেনারেটর ও প্রিন্ট প্রিভিউ (Application Maker)",
-  "description": "সরকারি ও প্রাতিষ্ঠানিক সকল আবেদনপত্র তৈরি, লেফট অ্যালাইন ও জাস্টিফাইড বডি ফরম্যাটিং সহ স্ট্যান্ডার্ড A4 প্রিন্ট প্রিভিউ।",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}

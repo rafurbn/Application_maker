@@ -1,20 +1,97 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# অফিসিয়াল দরখাস্ত প্রস্তুতকারক (PWA)
 
-# Run and deploy your AI Studio app
+সরকারি প্রাথমিক বিদ্যালয়ের সহকারী/প্রধান শিক্ষক এবং স্কুল-কলেজের শিক্ষার্থীদের জন্য
+বাংলা দরখাস্ত তৈরি, লাইভ A4 প্রিভিউ, PDF ডাউনলোড ও প্রিন্ট করার একটি লগইন-বিহীন PWA।
 
-This contains everything you need to run your app locally.
+- **পার্ট ১ (চাকরিজীবী):** ছুটি, যোগদান পত্র, পেনশন, পাসপোর্ট NOC, দেশান্তর, অর্জিত ছুটি সহ ৮টি ফরম্যাট
+- **পার্ট ২ (শিক্ষার্থী):** অনুপস্থিতি, অগ্রিম ছুটি, ফি মওকুফ, গরিবী সাহায্য, টিসি, প্রশংসাপত্র, পুনর্ভর্তি — ৭টি ফরম্যাট
+- লিংকে ক্লিক করলেই ইনস্টল হয় (Android/Windows) — iOS-এ `Share → Add to Home Screen`
+- সব তথ্য ব্রাউজারেই থাকে; সার্ভারে শুধু গোপন একটি সংখ্যার হিসাব যায় (ঐচ্ছিক)
 
-View your app in AI Studio: https://ai.studio/apps/eb82cbde-5fff-4958-ac68-4ffcdf7d1283
+## দ্রুত চালু (Local)
 
-## Run Locally
+```bash
+npm install
+npm run dev        # http://localhost:3000
+npm test           # ৩২টি ইউনিট টেস্ট
+npm run typecheck
+npm run build && npm run size   # প্রথম লোডের সাইজ রিপোর্ট
+```
 
-**Prerequisites:**  Node.js
+`npm run icons` দিলে `public/icon.svg` থেকে সব PNG আইকন ও `og-image.png` আবার তৈরি হয়।
 
+## Vercel-এ লাইভ করা
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+1. এই রিপোটি Vercel-এ import করুন। Framework অটো `Vite` ধরবে; `vercel.json`-এ
+   build command (`npm run build`), output (`dist`), SPA rewrite ও হেডার আগেই সেট করা আছে।
+2. Production domain বসার পর `index.html`-এর `og:image` লাইনটি absolute URL করে দিন,
+   যেমন `content="https://আপনার-ডোমেইন/og-image.png"` (না দিলেও বেশিরভাগ ক্রলার
+   রিলেটিভ পাথ ঠিকঠাক ধরে, তবে absolute-ই নিরাপদ)।
+3. Supabase যোগ করার পর (নিচে) Project Settings → Environment Variables-এ
+   `VITE_SUPABASE_URL` ও `VITE_SUPABASE_ANON_KEY` বসিয়ে একবার redeploy করুন।
+
+`/admin-panel` ঠিকানাটি rewrite হয়ে অ্যাপই খোলে — ভেতরে পাসওয়ার্ড/টোকেন চায়।
+
+## ঐচ্ছিক ধাপ ২: Supabase দিয়ে লাইভ পরিসংখ্যান
+
+শুপাবেজ ছাড়াও অ্যাপ চলবে — সেক্ষেত্রে অ্যাডমিন প্যানেল স্পষ্টভাবে লিখে দেবে যে
+সংখ্যাগুলো **শুধু এই ডিভাইসের**। সার্ভার-সাইড কাউন্টের জন্য:
+
+```bash
+# ১) প্রজেক্ট তৈরি ও মাইগ্রেশন
+supabase login
+supabase link --project-ref <YOUR_PROJECT_REF>
+supabase db push                      # supabase/migrations/0001_init.sql চালানো হবে
+
+# ২) Edge Function + সিক্রেট (ADMIN_TOKEN নিজে তৈরি করুন, বড় ও এলোমেলো রাখুন)
+openssl rand -hex 32                  # এটিই আপনার অ্যাডমিন পাসওয়ার্ড
+supabase secrets set ADMIN_TOKEN="<ওই টোকেন>"
+supabase functions deploy admin-stats --no-verify-jwt
+
+# ৩) ক্লায়েন্টের env (Vercel-এও একই দুটি ভ্যারিয়েবল)
+cp .env.example .env.local            # VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
+```
+
+কী কী যায়: `uid` (র‍্যান্ডম), দিনের তারিখ, কয়টি দরখাস্ত তৈরি হয়েছে, কোন ফরম্যাট কতবার।
+কী কী **যায় না**: নাম, মোবাইল, প্রতিষ্ঠান, বিষয়, আবেদনের লেখা — কোনোটিই যায় না।
+RLS-এর কারণে anon key দিয়ে কেউ পরিসংখ্যান **পড়তে বা মুছে ফেলতে পারে না**; পড়া
+যায় শুধু `admin-stats` Function থেকে (service role)।
+
+> **Free tier caveat:** Supabase-এর ফ্রি প্রজেক্ট ৭ দিন নিষ্ক্রিয় থাকলে ডেটাবেস pause হয়।
+> অন্তত সপ্তাহে একবার প্যানেল খুললেই থাকবে, অথবা ছোট paid plan নিন।
+> Region: Vercel `bom1` + Supabase `ap-south-1` (Singapore) — বাংলাদেশ থেকে দেরি সবচেয়ে কম।
+
+## অ্যাডমিন প্যানেল
+
+- খোলার উপায়: ফুটারের লিংক, অথবা `https://ডোমেইন/admin-panel`
+- Supabase যুক্ত থাকলে: লগইনে `ADMIN_TOKEN` দিন → সব সংখ্যা সার্ভার থেকে
+- Supabase যুক্ত না থাকলে: প্রথমবার খুললেই একটি পাসওয়ার্ড সেট হয় (SHA-256 হিসেবে
+  শুধু এই ব্রাউজারে)। কোনো ডিফল্ট পাসওয়ার্ড কোডে নেই — কখনোই ছিল না।
+
+## গোপনীয়তা ও ডেটা
+
+`তথ্য ও ব্যাকআপ` মেনু থেকে: JSON ব্যাকআপ নামান, ফেরান, অথবা এই ডিভাইসের সব তথ্য
+মুছে ফেলুন (পুরোনো সব কীসহ)। ব্রাউজার ডাটা ক্লিয়ার করলে সংরক্ষিত দরখাস্ত মুছে যায়,
+তাই ব্যাকআপের কথা ইউজারকে বারবার জানানো হয়।
+
+## সাইজ বাজেট
+
+প্রথম লোড ≤ ১৬০ kB gzip (React + ১৫টি টেমপ্লেট + স্টাইল)। PDF ইঞ্জিন
+(`html2canvas-pro` + `jsPDF`) শুধু "PDF ডাউনলোড" চাপলেই লোড হয়।
+রিপোর্ট: `npm run size`। বাংলা ফন্ট Google Fonts থেকে আসে এবং ব্রাউজারে ক্যাশ থাকে।
+
+## ট্রাবলশুটিং
+
+| সমস্যা | কারণ/সমাধান |
+| --- | --- |
+| ইনস্টল বাটন আসে না | HTTPS দরকার; অথচ iOS-এ ব্রাউজার নিজে থেকে বাটন দেখায় না — `Share → Add to Home Screen` |
+| পুরোনো ভার্সন দেখাচ্ছে | Service Worker পুরোনো ক্যাশ ধরে রেখেছে। `sw.js`-এর cache name প্রতি ডিপ্লয়ে বদলায়, তাই একবার রিলোডেই ঠিক হবে |
+| PDF তৈরি হয় না | ব্রাউজার memory কম হলে ব্যর্থ হয় — এর বদলে "প্রিন্ট" → Save as PDF ব্যবহার করুন |
+| প্রিন্টে মার্জিন আলাদা | প্রিভিউ শিট ও `@page` একই জ্যামিতি ব্যবহার করে (`22mm 35mm`); প্রিন্ট ডায়ালগে Margins = Default, Scale = 100% রাখুন |
+| অ্যাডমিনে সব '—' | Supabase env বসানো হয়নি বা Function deploy হয়নি |
+
+## প্রযুক্তি
+
+React 19 · Vite 8 · TypeScript · Tailwind CSS v4 · jsPDF + html2canvas-pro · Supabase (ঐচ্ছিক)
+
+CI: প্রতি push/PR-এ typecheck → tests → build → সাইজ বাজেট চেক (`.github/workflows/ci.yml`)।
