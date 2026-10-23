@@ -3,6 +3,7 @@ import { SubCategoryType, FormatTemplate, DashboardTheme, SavedApplication } fro
 import { ALL_TEMPLATES } from '../data/templates';
 import { DesignationSelector } from './DesignationSelector';
 import { AdSlot } from './AdSlot';
+import { toBanglaStamp } from '../utils/banglaUtils';
 import {
   CalendarDays,
   Activity,
@@ -462,7 +463,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   {app.applicantName} • {app.workplace}
                 </p>
                 <p className="text-[10px] text-slate-400 mt-1">
-                  {new Date(app.savedAt).toLocaleDateString("bn-BD")}
+                  {toBanglaStamp(app.savedAt)}
                 </p>
               </button>
             ))}

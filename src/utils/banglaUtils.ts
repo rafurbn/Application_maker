@@ -147,6 +147,16 @@ export function formatDaysWithSuffix(rawDays: string | undefined, suffix: 'দ�
   return `${banglaDigits} ${suffix}`;
 }
 
+/**
+ * Intl throws RangeError on an invalid Date, which would blank an entire screen.
+ * Timestamps read back from storage or from the server can be missing or malformed.
+ */
+export function toBanglaStamp(iso: string | undefined | null, withTime = false): string {
+  const date = iso ? new Date(iso) : null;
+  if (!date || Number.isNaN(date.getTime())) return '—';
+  return withTime ? date.toLocaleTimeString('bn-BD') : date.toLocaleDateString('bn-BD');
+}
+
 export function calculateBanglaDuration(startDateStr: string, endDateStr: string): { days: number; text: string } {
   if (!startDateStr || !endDateStr) {
     return { days: 0, text: '' };

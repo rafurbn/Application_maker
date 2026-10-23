@@ -5,6 +5,7 @@ import {
   toBanglaDateWords,
   toBanglaNumber,
   toBanglaNumericDate,
+  toBanglaStamp,
   toEnglishNumber,
 } from '../banglaUtils';
 
@@ -64,5 +65,19 @@ describe('calculateBanglaDuration', () => {
   it('refuses reversed or missing dates instead of printing nonsense', () => {
     expect(calculateBanglaDuration('2026-10-05', '2026-10-01')).toEqual({ days: 0, text: '' });
     expect(calculateBanglaDuration('', '2026-10-01')).toEqual({ days: 0, text: '' });
+  });
+});
+
+describe('toBanglaStamp', () => {
+  it('formats a valid timestamp for lists', () => {
+    expect(toBanglaStamp('2026-10-23T09:15:00Z')).not.toBe('—');
+    expect(toBanglaStamp('2026-10-23T09:15:00Z', true)).toContain(':');
+  });
+
+  it('shows a dash instead of throwing on missing or malformed timestamps', () => {
+    expect(() => toBanglaStamp('not-a-date')).not.toThrow();
+    expect(toBanglaStamp('not-a-date')).toBe('—');
+    expect(toBanglaStamp(undefined)).toBe('—');
+    expect(toBanglaStamp('')).toBe('—');
   });
 });

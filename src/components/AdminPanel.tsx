@@ -19,6 +19,7 @@ import {
 import { ALL_TEMPLATES } from '../data/templates';
 import { getSavedApplications, analyticsResetLocal, type LocalStatsSnapshot } from '../utils/storage';
 import { fetchAdminStats, isRemoteAnalyticsEnabled, type AdminStats } from '../lib/analytics';
+import { toBanglaStamp } from '../utils/banglaUtils';
 import { Modal } from './Modal';
 
 interface AdminPanelProps {
@@ -376,7 +377,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, localSt
               <span>সদ্য সক্রিয়: <b>{remoteStats.liveUsers}</b></span>
               <span>আজ ইউনিক: <b>{remoteStats.usersToday}</b></span>
               <span>আজ তৈরি: <b>{remoteStats.generationsToday}</b></span>
-              <span>হালনাগাদ: <b>{new Date(remoteStats.lastUpdated).toLocaleTimeString('bn-BD')}</b></span>
+              <span>হালনাগাদ: <b>{toBanglaStamp(remoteStats.lastUpdated, true)}</b></span>
             </div>
           )}
 
