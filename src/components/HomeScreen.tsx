@@ -165,6 +165,7 @@ interface HomeScreenProps {
   onThemeChange: (theme: DashboardTheme) => void;
   onInstallApp?: () => void;
   isInstallable?: boolean;
+  isInstalled?: boolean;
   savedApps: SavedApplication[];
   onOpenSaved: () => void;
   onLoadSaved: (saved: SavedApplication) => void;
@@ -180,6 +181,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onThemeChange,
   onInstallApp,
   isInstallable = false,
+  isInstalled = false,
   savedApps,
   onOpenSaved,
   onLoadSaved,
@@ -384,7 +386,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <span>পুরোনো লেখা পেস্ট</span>
             </button>
 
-            {onInstallApp && (
+            {onInstallApp && !isInstalled && (
               <button
                 onClick={onInstallApp}
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-amber-950 font-bold text-xs sm:text-sm shadow-md transition-all hover:scale-102"

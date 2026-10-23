@@ -48,7 +48,7 @@ export default function App() {
   const [activeNav, setActiveNav] = useState<AppNav>('dashboard');
 
   const { stats, isRemoteEnabled, trackApplicationGeneration } = useAnonymousIdentity();
-  const { isInstallable, showIosPrompt, setShowIosPrompt, installApp } = usePwaInstall();
+  const { isInstallable, isInstalled, showIosPrompt, setShowIosPrompt, installApp } = usePwaInstall();
   const remoteAnalytics = analyticsStatus();
 
   useEffect(() => {
@@ -101,7 +101,7 @@ export default function App() {
       return;
     }
     showToast(
-      'এই ব্রাউজার এখনই ইনস্টল করতে দিচ্ছে না — ব্রাউজার মেনু থেকে "Add to Home Screen / হোম স্ক্রিনে যোগ করুন" চাপুন।',
+      'এই ফোনটি থেকে স্বয়ংক্রিয় ইনস্টল-অপশন এখনো আসেনি — Chrome মেনু (⋮) থেকে "Install app" (পুরোনো ভার্সনে "হোম স্ক্রিনে যোগ করুন") চাপুন, মেনু দিয়ে ইনস্টল সবসময়ই যায়।',
       'info',
     );
   };
@@ -326,6 +326,7 @@ export default function App() {
         hasActiveApplication={Boolean(selectedTemplateId)}
         onInstallApp={handleInstallApp}
         isInstallable={isInstallable}
+        isInstalled={isInstalled}
       />
 
       <main className="flex-1 pb-16">
@@ -340,6 +341,7 @@ export default function App() {
             onThemeChange={applyThemeChange}
             onInstallApp={handleInstallApp}
             isInstallable={isInstallable}
+            isInstalled={isInstalled}
             savedApps={savedApps}
             onOpenSaved={() => setIsSavedModalOpen(true)}
             onLoadSaved={handleLoadSaved}

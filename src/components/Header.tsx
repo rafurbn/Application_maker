@@ -28,6 +28,7 @@ interface HeaderProps {
   hasActiveApplication?: boolean;
   onInstallApp?: () => void;
   isInstallable?: boolean;
+  isInstalled?: boolean;
 }
 
 const THEME_BUTTONS: { value: DashboardTheme; label: string; activeClass: string; title: string }[] = [
@@ -49,6 +50,7 @@ export const Header: React.FC<HeaderProps> = ({
   hasActiveApplication = false,
   onInstallApp,
   isInstallable = false,
+  isInstalled = false,
 }) => {
   const navItems: { nav: AppNav; label: string; icon: React.ReactNode }[] = [
     { nav: 'dashboard', label: 'ড্যাশবোর্ড', icon: <LayoutDashboard className="w-3.5 h-3.5" /> },
@@ -127,7 +129,7 @@ export const Header: React.FC<HeaderProps> = ({
               </span>
             </div>
 
-            {onInstallApp && (
+            {onInstallApp && !isInstalled && (
               <button
                 onClick={onInstallApp}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-amber-950 text-xs font-bold shadow-md transition-all hover:scale-102"
