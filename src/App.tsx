@@ -25,7 +25,7 @@ import { Modal } from './components/Modal';
 import { TextImportPanel } from './components/TextImportPanel';
 import { AdSlot } from './components/AdSlot';
 import { ToastContainer, ToastMessage } from './components/Toast';
-import { ArrowLeft, Share, PlusSquare, Smartphone, Download, Upload, Trash2 } from 'lucide-react';
+import { ArrowLeft, Share, PlusSquare, Smartphone, Download, Upload, Trash2, ShieldCheck, Phone } from 'lucide-react';
 
 const SAVED_APPLICATIONS_SOFT_LIMIT = 50;
 
@@ -454,6 +454,23 @@ export default function App() {
               অ্যাডমিন পোর্টাল (/admin-panel)
             </button>
           </div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 mt-4 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+          <span className="flex items-center gap-1.5 font-semibold text-slate-700">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+            <span>Admin: Rafiqul Islam</span>
+          </span>
+          <span className="hidden sm:inline text-slate-300">•</span>
+          <a
+            href="https://wa.me/8801732679551"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 font-semibold text-slate-700 hover:text-emerald-700 transition-colors"
+          >
+            <Phone className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+            <span>Mobile+ WhatsApp: +8801732-679551</span>
+          </a>
         </div>
       </footer>
 
