@@ -97,7 +97,7 @@ export default function App() {
   const handleInstallApp = async () => {
     const installed = await installApp();
     if (installed) {
-      showToast('অ্যাপটি সফলভাবে ইনস্টল হয়েছে!', 'success');
+      showToast('ইনস্টল অনুরোধ গ্রহণ হয়েছে। আইকন হোম স্ক্রিনে না দেখা দিলে অ্যাপ ড্রয়ারে খুঁজুন, কিংবা ফোনের সেটিংসে Chrome-কে "হোম স্ক্রিন শর্টকাট তৈরি"-এর অনুমতি দিন।', 'success');
       return;
     }
     showToast(
