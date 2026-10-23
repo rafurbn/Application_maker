@@ -1,28 +1,53 @@
 {
   "id": "/",
-  "name": "অফিসিয়াল দরখাস্ত প্রস্তুতকারক",
+  "name": "অফিসিয়াল দরখাস্ত প্রস্তুতকারক",
   "short_name": "দরখাস্ত",
-  "description": "সরকারি প্রাথমিক বিদ্যালয়ের সহকারী ও প্রধান শিক্ষক এবং শিক্ষার্থীদের জন্য নিখুঁত বাংলা দরখাস্ত প্রস্তুত ও প্রিন্ট করার অফিশিয়াল PWA অ্যাপ।",
+  "description": "সরকারি প্রাথমিক বিদ্যালয়ের সহকারী ও প্রধান শিক্ষক এবং শিক্ষার্থীদের জন্য নিখুঁত বাংলা দরখাস্ত প্রস্তুত ও প্রিন্ট করার অফিশিয়াল PWA অ্যাপ।",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait-primary",
   "background_color": "#042f24",
   "theme_color": "#042f24",
   "lang": "bn",
+  "dir": "ltr",
   "categories": ["productivity", "education", "utilities"],
   "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
     {
-      "src": "/icon.svg",
-      "sizes": "192x192 512x512",
-      "type": "image/svg+xml",
-      "purpose": "any"
+      "name": "ছুটির দরখাস্ত",
+      "short_name": "ছুটি",
+      "description": "কাজের অবসর ছুটির আবেদনপত্র খুলুন",
+      "url": "/?template=casual_leave",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
-      "src": "/icon.svg",
-      "sizes": "192x192 512x512",
-      "type": "image/svg+xml",
-      "purpose": "maskable"
+      "name": "যোগদান পত্র",
+      "short_name": "যোগদান",
+      "description": "যোগদান পত্রের আবেদনপত্র খুলুন",
+      "url": "/?template=joining_letter",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "ট্রান্সফার সার্টিফিকেট",
+      "short_name": "টিসি",
+      "description": "শিক্ষার্থীর স্থানান্তর সনদ দরখাস্ত",
+      "url": "/?template=student_tc",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "আমার সংরক্ষিত",
+      "short_name": "সংরক্ষিত",
+      "description": "এই ডিভাইসে সংরক্ষিত দরখাস্তগুলো দেখুন",
+      "url": "/?view=saved",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

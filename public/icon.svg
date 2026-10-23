@@ -37,7 +37,7 @@
   <circle cx="316" cy="336" r="32" fill="url(#gold)" />
   <path d="M306 336 L313 343 L328 328" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
   
-  <!-- Bottom PWA Badge -->
-  <rect x="180" y="438" width="152" height="36" rx="18" fill="#10b981" />
-  <text x="256" y="462" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="bold" fill="#ffffff" text-anchor="middle">A4 PRINT PWA</text>
+  <!-- Bottom label badge -->
+  <rect x="156" y="430" width="200" height="46" rx="23" fill="#10b981" />
+  <text x="256" y="463" font-family="Noto Sans Bengali, system-ui, sans-serif" font-size="28" font-weight="bold" fill="#04281f" text-anchor="middle">দরখাস্ত</text>
 </svg>

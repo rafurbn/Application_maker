@@ -1,78 +1,90 @@
-const CACHE_NAME = 'dorkhost-pwa-v1';
-const STATIC_ASSETS = [
+/* Service worker for অফিসিয়াল দরখাস্ত প্রস্তুতকারক (PWA)
+   CACHE_NAME is replaced with the build id by the vite plugin in vite.config.ts,
+   so every deploy invalidates the old shell automatically. */
+const CACHE_NAME = 'dorkhost-pwa-__BUILD_ID__';
+const APP_SHELL = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/icon.svg'
+  '/icon.svg',
+  '/icon-maskable.svg',
+  '/register-sw.js',
+  '/robots.txt',
 ];
+const FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
 
-// Install event: cache core assets
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
-    })
+    caches
+      .open(CACHE_NAME)
+      .then((cache) => cache.addAll(APP_SHELL))
+      .catch(() => undefined),
   );
   self.skipWaiting();
 });
 
-// Activate event: cleanup old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cache) => {
-          if (cache !== CACHE_NAME) {
-            return caches.delete(cache);
-          }
-        })
-      );
-    })
+    caches
+      .keys()
+      .then((names) => Promise.all(names.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n)))),
   );
   self.clients.claim();
 });
 
-// Fetch event: network first for pages, stale-while-revalidate for assets
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
+  const request = event.request;
+  if (request.method !== 'GET') return;
 
-  const url = new URL(event.request.url);
+  const url = new URL(request.url);
+  const isFont = FONT_HOSTS.includes(url.hostname);
+  const isSameOrigin = url.origin === self.location.origin;
 
-  // For navigation requests, try network first, fallback to cache
-  if (event.request.mode === 'navigate') {
+  // Navigations: network first so users never get a stale shell, cache as the offline fallback.
+  if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match('/index.html');
-      })
+      fetch(request)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put('/index.html', copy));
+          return response;
+        })
+        .catch(() => caches.match('/index.html').then((cached) => cached || Response.error())),
     );
     return;
   }
 
-  // For static assets, try cache first, then fetch and update cache
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        // Fetch in background to revalidate cache
-        fetch(event.request)
-          .then((networkResponse) => {
-            if (networkResponse && networkResponse.status === 200) {
-              caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse));
-            }
-          })
-          .catch(() => {});
-        return cachedResponse;
-      }
+  // Everything outside our own origin (except Google Fonts) is passed through untouched.
+  if (!isSameOrigin && !isFont) return;
 
-      return fetch(event.request).then((networkResponse) => {
-        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-          return networkResponse;
+  // Google Fonts and hashed build assets: cache first, refresh in the background.
+  if (isFont || url.pathname.startsWith('/assets/')) {
+    event.respondWith(
+      caches.match(request).then(
+        (cached) =>
+          cached ||
+          fetch(request).then((response) => {
+            if (response.status === 200 && (isFont || response.type === 'basic')) {
+              const copy = response.clone();
+              caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+            }
+            return response;
+          }),
+      ),
+    );
+    return;
+  }
+
+  // Other same-origin files (icons, manifest, pdf libs): network first, fall back to cache.
+  event.respondWith(
+    fetch(request)
+      .then((response) => {
+        if (response.status === 200 && response.type === 'basic') {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
         }
-        const responseToCache = networkResponse.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
-        return networkResponse;
-      });
-    })
+        return response;
+      })
+      .catch(() => caches.match(request).then((cached) => cached || Response.error())),
   );
 });
