@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { ALL_TEMPLATES } from '../data/templates';
 import { getSavedApplications, analyticsResetLocal, type LocalStatsSnapshot } from '../utils/storage';
-import { fetchAdminStats, isRemoteAnalyticsEnabled, type AdminStats } from '../lib/analytics';
+import { fetchAdminStats, isRemoteAnalyticsEnabled, isRemoteAnalyticsMisconfigured, type AdminStats } from '../lib/analytics';
 import { toBanglaStamp } from '../utils/banglaUtils';
 import { Modal } from './Modal';
 
@@ -269,6 +269,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, localSt
         </div>
       ) : (
         <div className="space-y-5">
+          {isRemoteAnalyticsMisconfigured && (
+            <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-300 text-[11px] leading-relaxed text-rose-900 flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600 mt-0.5" />
+              <span>
+                <b>VITE_SUPABASE_URL ঠিকমতো বসানো হয়নি</b> — মানটি অবশ্যই
+                <code className="bg-white px-1 rounded">https://&lt;ref&gt;.supabase.co</code> আকারের হতে হবে
+                (শুধু প্রজেক্ট রেফ দিলে চলবে না)। তাই সার্ভারে কিছু লেখা হচ্ছে না; নিচের সংখ্যাগুলো শুধু এই ডিভাইসের।
+              </span>
+            </div>
+          )}
+
           {!isRemoteEnabled && (
             <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-300 text-[11px] leading-relaxed text-amber-900 flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" />

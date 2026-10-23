@@ -3,10 +3,27 @@
 // optional: when VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY are absent the app
 // stays 100% local and every call resolves as a no-op.
 
-const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.replace(/\/$/, '');
+/**
+ * Supabase hands out the project ref and the full URL in different places, and a
+ * bare ref used to be concatenated into a relative request that 404s against our
+ * own domain — so a ref alone is corrected, and anything that is not an https
+ * origin turns remote mode off instead of failing silently on every heartbeat.
+ */
+export function resolveSupabaseUrl(raw: string | undefined): string | undefined {
+  const value = raw?.trim().replace(/\/+$/, '');
+  if (!value) return undefined;
+  if (/^[a-z0-9]{8,20}$/i.test(value)) return `https://${value}.supabase.co`;
+  return /^https:\/\//i.test(value) ? value : undefined;
+}
+
+const RAW_SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+const SUPABASE_URL = resolveSupabaseUrl(RAW_SUPABASE_URL);
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
 export const isRemoteAnalyticsEnabled = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+
+/** Configured, but not usable — the admin panel says so instead of showing zeros. */
+export const isRemoteAnalyticsMisconfigured = Boolean(RAW_SUPABASE_URL?.trim() && !SUPABASE_URL);
 
 export interface Heartbeat {
   uid: string;
