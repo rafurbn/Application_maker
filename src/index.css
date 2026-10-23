@@ -1,0 +1,150 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Noto Sans Bengali', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+}
+
+.font-serif-bn {
+  font-family: 'Noto Serif Bengali', 'Tiro Bangla', Georgia, serif;
+}
+
+.font-sans-bn {
+  font-family: 'Noto Sans Bengali', sans-serif;
+}
+
+/* ======================================================== */
+/* High-Tech Curated Atmospheric Backgrounds */
+/* ======================================================== */
+
+/* 1. Executive Modern Mint & Slate (Default Light) */
+.tech-bg-executive {
+  background-color: #f6f8f7;
+  background-image:
+    radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.08) 0px, transparent 45%),
+    radial-gradient(at 100% 10%, rgba(14, 165, 233, 0.07) 0px, transparent 40%),
+    radial-gradient(at 50% 100%, rgba(99, 102, 241, 0.05) 0px, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.03) 0px, transparent 60%),
+    radial-gradient(#10b98114 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 28px 28px;
+}
+
+/* 2. Cyber Emerald Dark (Futuristic Tech) */
+.tech-bg-cyber {
+  background-color: #04130e;
+  background-image:
+    radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.18) 0px, transparent 50%),
+    radial-gradient(at 100% 20%, rgba(6, 182, 212, 0.14) 0px, transparent 45%),
+    radial-gradient(at 50% 90%, rgba(16, 185, 129, 0.12) 0px, transparent 50%),
+    radial-gradient(#10b98126 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 32px 32px;
+}
+
+/* 3. Deep Navy Sapphire (Corporate Executive) */
+.tech-bg-navy {
+  background-color: #0b1324;
+  background-image:
+    radial-gradient(at 0% 10%, rgba(59, 130, 246, 0.16) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(147, 51, 234, 0.12) 0px, transparent 40%),
+    radial-gradient(at 50% 100%, rgba(16, 185, 129, 0.1) 0px, transparent 50%),
+    radial-gradient(#3b82f622 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 30px 30px;
+}
+
+/* 4. Warm Luxury Ivory (Soft Paper & Brass) */
+.tech-bg-ivory {
+  background-color: #fbfbfa;
+  background-image:
+    radial-gradient(at 10% 10%, rgba(245, 158, 11, 0.06) 0px, transparent 40%),
+    radial-gradient(at 90% 0%, rgba(16, 185, 129, 0.05) 0px, transparent 40%),
+    radial-gradient(at 50% 100%, rgba(217, 119, 6, 0.04) 0px, transparent 50%),
+    radial-gradient(#d9770612 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 28px 28px;
+}
+
+/* Glass Card Accents */
+.glass-panel-light {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+.glass-panel-dark {
+  background: rgba(10, 31, 23, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(16, 185, 129, 0.22);
+}
+
+.glass-panel-navy {
+  background: rgba(15, 26, 49, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(59, 130, 246, 0.22);
+}
+
+/* Application specific typography */
+.application-container {
+  text-align: left;
+}
+
+.application-body-text {
+  text-align: justify !important;
+  text-justify: inter-word !important;
+  line-height: 1.85 !important;
+  word-spacing: 0.05em;
+}
+
+/* A4 Sheet Preview styles */
+.a4-sheet {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 22mm 22mm 25mm 25mm;
+  margin-left: auto;
+  margin-right: auto;
+  background: #ffffff;
+  color: #111827;
+  position: relative;
+  box-sizing: border-box;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 15mm 20mm 15mm 20mm;
+  }
+  
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 14pt !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .a4-sheet {
+    width: 100% !important;
+    min-height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  /* Force left alignment and justified body */
+  .application-container {
+    text-align: left !important;
+  }
+
+  .application-body-text {
+    text-align: justify !important;
+    text-justify: inter-word !important;
+    line-height: 1.8 !important;
+  }
+}

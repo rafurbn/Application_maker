@@ -1,0 +1,28 @@
+{
+  "id": "/",
+  "name": "অফিসিয়াল দরখাস্ত প্রস্তুতকারক",
+  "short_name": "দরখাস্ত",
+  "description": "সরকারি প্রাথমিক বিদ্যালয়ের সহকারী ও প্রধান শিক্ষক এবং শিক্ষার্থীদের জন্য নিখুঁত বাংলা দরখাস্ত প্রস্তুত ও প্রিন্ট করার অফিশিয়াল PWA অ্যাপ।",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#042f24",
+  "theme_color": "#042f24",
+  "lang": "bn",
+  "categories": ["productivity", "education", "utilities"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
