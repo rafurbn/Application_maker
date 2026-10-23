@@ -29,6 +29,12 @@ npm run build && npm run size   # প্রথম লোডের সাইজ �
    রিলেটিভ পাথ ঠিকঠাক ধরে, তবে absolute-ই নিরাপদ)।
 3. Supabase যোগ করার পর (নিচে) Project Settings → Environment Variables-এ
    `VITE_SUPABASE_URL` ও `VITE_SUPABASE_ANON_KEY` বসিয়ে একবার redeploy করুন।
+   `VITE_SUPABASE_URL`-এ পুরো `https://<ref>.supabase.co` দিন (শুধু প্রজেক্ট রেফ দিলে
+   অ্যাপটি সেটি ঠিক করে নেয়, তবে দুটোই একই প্রজেক্টের হতে হবে — না হলে PostgREST `401`
+   দেবে)। এই ভেরিয়েবলগুলো বিল্ড-টাইমে বান্ডলে বসে, তাই পরিবর্তনের পর **নতুন deploy বাধ্যতামূলক**।
+4. `vercel.json`-এ `cleanUrls` যোগ করবেন না — এটি `/index.html`-কে 308-রে `/`-তে পাঠিয়ে
+   দেয়, ফলে SPA rewrite-এর destination হারিয়ে যায় এবং `/admin-panel` সহ প্রতিটি
+   sub-path Vercel-এর 404 পেজ দেখায়।
 
 `/admin-panel` ঠিকানাটি rewrite হয়ে অ্যাপই খোলে — ভেতরে পাসওয়ার্ড/টোকেন চায়।
 
