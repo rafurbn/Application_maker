@@ -1,19 +1,58 @@
-import { SavedApplication, ApplicationFormData, SubCategoryType } from '../types';
+import { SavedApplication, ApplicationFormData, SubCategoryType, DashboardTheme } from '../types';
 
 const STORAGE_KEY = 'bangla_app_saved_applications_v1';
+const PREFS_KEY = 'bangla_app_prefs_v1';
+const IDENTITY_KEY = 'bangla_app_identity_v1';
+export const STATS_KEY = 'bangla_app_stats_v1';
+
+export interface LocalStatsSnapshot {
+  totalGenerations: number;
+  perTemplate: Record<string, { title: string; category: 'employee' | 'student'; count: number }>;
+  perDay: Record<string, number>;
+  daysVisited: string[];
+  firstSeenAt: string;
+}
+
+export const DATA_SCHEMA_VERSION = 1;
 
 export interface SaveResult {
   ok: boolean;
   reason?: 'saved' | 'quota' | 'unavailable';
 }
 
+export interface Preferences {
+  theme: DashboardTheme;
+  globalDesignation: string;
+}
+
+export const DEFAULT_PREFERENCES: Preferences = {
+  theme: 'executive',
+  globalDesignation: 'সহকারী শিক্ষক',
+};
+
+function safeRemove(key: string) {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    /* storage unavailable */
+  }
+}
+
+export function newId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `id_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
 export function getSavedApplications(): SavedApplication[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
-    return JSON.parse(raw) as SavedApplication[];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as SavedApplication[]) : [];
   } catch (e) {
-    console.error('Failed to read from localStorage', e);
+    console.error('Failed to read saved applications', e);
     return [];
   }
 }
@@ -27,45 +66,165 @@ export function saveApplicationLocally(item: {
   subject: string;
   data: ApplicationFormData;
 }): SaveResult {
-  try {
-    const existing = getSavedApplications();
-    const newEntry: SavedApplication = {
-      id: Math.random().toString(36).substring(2, 11) + '_' + Date.now(),
-      formatId: item.formatId,
-      formatTitle: item.formatTitle,
-      category: item.category,
-      applicantName: item.applicantName,
-      workplace: item.workplace,
-      subject: item.subject,
-      data: item.data,
-      savedAt: new Date().toISOString(),
-    };
+  const newEntry: SavedApplication = {
+    id: newId(),
+    formatId: item.formatId,
+    formatTitle: item.formatTitle,
+    category: item.category,
+    applicantName: item.applicantName,
+    workplace: item.workplace,
+    subject: item.subject,
+    data: item.data,
+    savedAt: new Date().toISOString(),
+  };
 
-    let updated = [newEntry, ...existing];
-    let reason: 'saved' | 'quota' = 'saved';
+  const existing = getSavedApplications();
+  let updated = [newEntry, ...existing];
 
-    // Keep up to 60 applications
-    if (updated.length > 60) {
-      updated = updated.slice(0, 60);
-      reason = 'quota';
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      return { ok: true, reason: attempt === 0 ? 'saved' : 'quota' };
+    } catch (e) {
+      console.error('Failed to save application', e);
+      if (updated.length <= 1) return { ok: false, reason: 'unavailable' };
+      // Storage is full: drop the oldest entry and retry, so the new one is never lost silently.
+      updated = updated.slice(0, updated.length - 1);
     }
-
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    return { ok: true, reason };
-  } catch (e) {
-    console.error('Failed to save application', e);
-    return { ok: false, reason: 'unavailable' };
   }
+  return { ok: false, reason: 'unavailable' };
 }
 
 export function deleteSavedApplication(id: string): SavedApplication[] {
+  const filtered = getSavedApplications().filter((app) => app.id !== id);
   try {
-    const existing = getSavedApplications();
-    const filtered = existing.filter((app) => app.id !== id);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
-    return filtered;
   } catch (e) {
     console.error('Failed to delete application', e);
-    return getSavedApplications();
   }
+  return filtered;
+}
+
+export function readPreferences(): Preferences {
+  try {
+    const raw = localStorage.getItem(PREFS_KEY);
+    if (!raw) return DEFAULT_PREFERENCES;
+    return { ...DEFAULT_PREFERENCES, ...(JSON.parse(raw) as Partial<Preferences>) };
+  } catch {
+    return DEFAULT_PREFERENCES;
+  }
+}
+
+export function writePreferences(patch: Partial<Preferences>): Preferences {
+  const next = { ...readPreferences(), ...patch };
+  try {
+    localStorage.setItem(PREFS_KEY, JSON.stringify(next));
+  } catch (e) {
+    console.error('Failed to store preferences', e);
+  }
+  return next;
+}
+
+export interface Identity {
+  uid: string;
+  firstSeenAt: string;
+}
+
+export function readIdentity(): Identity {
+  try {
+    const raw = localStorage.getItem(IDENTITY_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as Identity;
+      if (parsed && typeof parsed.uid === 'string' && parsed.uid.length >= 8) {
+        return { uid: parsed.uid, firstSeenAt: parsed.firstSeenAt || new Date().toISOString() };
+      }
+    }
+  } catch {
+    /* fall through and regenerate */
+  }
+  const created: Identity = { uid: newId(), firstSeenAt: new Date().toISOString() };
+  try {
+    localStorage.setItem(IDENTITY_KEY, JSON.stringify(created));
+  } catch {
+    /* private mode: keep the in-memory uid for this session */
+  }
+  return created;
+}
+
+export interface BackupBundle {
+  schemaVersion: number;
+  exportedAt: string;
+  applications: SavedApplication[];
+  preferences: Preferences;
+}
+
+export function exportBackup(): BackupBundle {
+  return {
+    schemaVersion: DATA_SCHEMA_VERSION,
+    exportedAt: new Date().toISOString(),
+    applications: getSavedApplications(),
+    preferences: readPreferences(),
+  };
+}
+
+export function importBackup(rawJson: string): { ok: boolean; added: number; reason?: string } {
+  let parsed: BackupBundle;
+  try {
+    parsed = JSON.parse(rawJson) as BackupBundle;
+  } catch {
+    return { ok: false, added: 0, reason: 'এই ফাইলটি সঠিক JSON ব্যাকআপ নয়।' };
+  }
+  if (!parsed || !Array.isArray(parsed.applications)) {
+    return { ok: false, added: 0, reason: 'ব্যাকআপ ফাইলে সংরক্ষিত দরখাস্ত পাওয়া যায়নি।' };
+  }
+
+  const current = getSavedApplications();
+  const seen = new Set(current.map((app) => app.id));
+  const incoming = parsed.applications.filter(
+    (app) => app && typeof app.id === 'string' && !seen.has(app.id),
+  );
+
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([...incoming, ...current]));
+  } catch (e) {
+    console.error('Failed to import backup', e);
+    return { ok: false, added: 0, reason: 'ব্রাউজার স্টোরেজ পূর্ণ — আগে কিছু দরখাস্ত মুছে ফেলুন।' };
+  }
+  writePreferences(parsed.preferences || DEFAULT_PREFERENCES);
+  return { ok: true, added: incoming.length };
+}
+
+/** Removes everything this app stored on this device. The anonymous id is wiped too. */
+export function eraseDeviceData() {
+  safeRemove(STORAGE_KEY);
+  safeRemove(PREFS_KEY);
+  safeRemove(IDENTITY_KEY);
+  analyticsResetLocal();
+  Object.keys(localStorage)
+    .filter(
+      (key) =>
+        key.startsWith('bangla_app_') ||
+        key.startsWith('live_user_') ||
+        key.startsWith('visitor_day_') ||
+        key.startsWith('template_count_') ||
+        key.startsWith('anon_user_') ||
+        LEGACY_KEYS.includes(key),
+    )
+    .forEach(safeRemove);
+}
+
+const LEGACY_KEYS = [
+  'app_generation_stats',
+  'total_generated_count',
+  'total_unique_visitors',
+  'admin_authenticated',
+  'admin_custom_password',
+];
+
+export function analyticsResetLocal() {
+  safeRemove(STATS_KEY);
+  LEGACY_KEYS.filter((key) => key !== 'admin_authenticated').forEach(safeRemove);
+  Object.keys(localStorage)
+    .filter((key) => key.startsWith('template_count_') || key.startsWith('visitor_day_'))
+    .forEach(safeRemove);
 }

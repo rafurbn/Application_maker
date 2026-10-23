@@ -1,82 +1,114 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { readIdentity, STATS_KEY, type LocalStatsSnapshot } from '../utils/storage';
+import { isRemoteAnalyticsEnabled, sendHeartbeat } from '../lib/analytics';
 
-export interface GenerationRecord {
-  templateId: string;
-  title: string;
-  category: 'employee' | 'student';
-  timestamp: string;
-  userId: string;
+const HEARTBEAT_MS = 60_000;
+
+export type LocalStats = LocalStatsSnapshot;
+
+const EMPTY_STATS: LocalStats = {
+  totalGenerations: 0,
+  perTemplate: {},
+  perDay: {},
+  daysVisited: [],
+  firstSeenAt: new Date().toISOString(),
+};
+
+/** Device-local calendar date, e.g. 2026-10-23. */
+function today(): string {
+  return new Date().toLocaleDateString('en-CA');
+}
+
+function readStats(): LocalStats {
+  try {
+    const raw = localStorage.getItem(STATS_KEY);
+    if (!raw) return EMPTY_STATS;
+    return { ...EMPTY_STATS, ...(JSON.parse(raw) as Partial<LocalStats>) };
+  } catch {
+    return EMPTY_STATS;
+  }
 }
 
 export function useAnonymousIdentity() {
-  const [identityId, setIdentityId] = useState<string>('');
+  const [identityId, setIdentityId] = useState('');
+  const [stats, setStats] = useState<LocalStats>(EMPTY_STATS);
+  const [lastHeartbeatAt, setLastHeartbeatAt] = useState<number | null>(null);
+  const statsRef = useRef<LocalStats>(EMPTY_STATS);
 
-  useEffect(() => {
-    let stored = localStorage.getItem('anon_user_uid');
-    if (!stored) {
-      stored = 'user_' + Math.random().toString(36).substring(2, 9) + Date.now().toString(36).substring(4);
-      localStorage.setItem('anon_user_uid', stored);
+  const persist = useCallback((next: LocalStats) => {
+    statsRef.current = next;
+    setStats(next);
+    try {
+      localStorage.setItem(STATS_KEY, JSON.stringify(next));
+    } catch (e) {
+      console.error('Local usage counters could not be stored', e);
     }
-    setIdentityId(stored);
-
-    // Track daily visitor
-    const today = new Date().toISOString().split('T')[0];
-    const visitorKey = `visitor_day_${today}`;
-    if (!localStorage.getItem(visitorKey)) {
-      localStorage.setItem(visitorKey, '1');
-      const allVisitorsKey = 'total_unique_visitors';
-      const count = parseInt(localStorage.getItem(allVisitorsKey) || '0', 10);
-      localStorage.setItem(allVisitorsKey, (count + 1).toString());
-    }
-
-    // Heartbeat for live user tracking
-    const heartbeatKey = `live_user_${stored}`;
-    sessionStorage.setItem('session_active', '1');
-    localStorage.setItem(heartbeatKey, Date.now().toString());
-
-    const interval = setInterval(() => {
-      localStorage.setItem(heartbeatKey, Date.now().toString());
-    }, 15000);
-
-    return () => {
-      clearInterval(interval);
-      localStorage.removeItem(heartbeatKey);
-    };
   }, []);
 
-  const trackApplicationGeneration = (templateId: string, title: string, category: 'employee' | 'student' = 'employee') => {
-    try {
-      const historyKey = 'app_generation_stats';
-      const history: GenerationRecord[] = JSON.parse(localStorage.getItem(historyKey) || '[]');
-      
-      const newRecord: GenerationRecord = {
-        templateId,
-        title,
-        category,
-        timestamp: new Date().toISOString(),
-        userId: identityId || 'anon',
-      };
-      
-      history.push(newRecord);
-      // Keep last 300 records
-      localStorage.setItem(historyKey, JSON.stringify(history.slice(-300)));
+  useEffect(() => {
+    const identity = readIdentity();
+    setIdentityId(identity.uid);
 
-      // Update aggregate count
-      const countKey = `template_count_${templateId}`;
-      const prevCount = parseInt(localStorage.getItem(countKey) || '0', 10);
-      localStorage.setItem(countKey, (prevCount + 1).toString());
+    const initial = readStats();
+    initial.firstSeenAt = initial.firstSeenAt || identity.firstSeenAt;
+    const days = initial.daysVisited.includes(today())
+      ? initial.daysVisited
+      : [...initial.daysVisited, today()].slice(-400);
+    persist({ ...initial, daysVisited: days });
 
-      // Update total generated
-      const totalGenKey = 'total_generated_count';
-      const prevTotal = parseInt(localStorage.getItem(totalGenKey) || '0', 10);
-      localStorage.setItem(totalGenKey, (prevTotal + 1).toString());
-    } catch {
-      // ignore storage quota issues
-    }
-  };
+    const beat = () => {
+      if (document.visibilityState !== 'visible') return;
+      const snapshot = statsRef.current;
+      const top = Object.entries(snapshot.perTemplate).sort((a, b) => b[1].count - a[1].count)[0];
+      void sendHeartbeat({
+        uid: identity.uid,
+        day: today(),
+        dayGenerations: snapshot.perDay[today()] || 0,
+        templateId: top ? top[0] : '',
+        templateTitle: top ? top[1].title : '',
+        category: top ? top[1].category : 'employee',
+        totalGenerations: snapshot.totalGenerations,
+        perTemplate: Object.fromEntries(
+          Object.entries(snapshot.perTemplate).map(([id, v]) => [id, v.count]),
+        ),
+      }).then((ok) => {
+        if (ok) setLastHeartbeatAt(Date.now());
+      });
+    };
+
+    beat();
+    const interval = setInterval(beat, HEARTBEAT_MS);
+    const onVisible = () => beat();
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [persist]);
+
+  const trackApplicationGeneration = useCallback(
+    (templateId: string, title: string, category: 'employee' | 'student' = 'employee') => {
+      const prev = statsRef.current;
+      const entry = prev.perTemplate[templateId] || { title, category, count: 0 };
+      const day = today();
+      const perDay = Object.fromEntries(
+        Object.entries({ ...prev.perDay, [day]: (prev.perDay[day] || 0) + 1 }).slice(-400),
+      );
+      persist({
+        ...prev,
+        totalGenerations: prev.totalGenerations + 1,
+        perDay,
+        perTemplate: { ...prev.perTemplate, [templateId]: { ...entry, title, count: entry.count + 1 } },
+      });
+    },
+    [persist],
+  );
 
   return {
     identityId,
+    stats,
+    isRemoteEnabled: isRemoteAnalyticsEnabled,
+    lastHeartbeatAt,
     trackApplicationGeneration,
   };
 }

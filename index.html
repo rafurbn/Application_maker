@@ -3,73 +3,52 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>অফিসিয়াল দরখাস্ত প্রস্তুতকারক - Automated Application Writer PWA</title>
-    <meta name="description" content="সরকারি প্রাথমিক বিদ্যালয়ের শিক্ষক ও শিক্ষার্থীদের জন্য দ্রুত ও নির্ভুল বাংলা দরখাস্ত প্রস্তুত ও প্রিন্ট করার আধুনিক PWA অ্যাপ।" />
+    <title>অফিসিয়াল দরখাস্ত প্রস্তুতকারক — বাংলা আবেদনপত্র ও A4 প্রিন্ট PWA</title>
+    <meta
+      name="description"
+      content="সরকারি প্রাথমিক বিদ্যালয়ের সহকারী ও প্রধান শিক্ষক এবং শিক্ষার্থীদের জন্য ১৫টি ফরম্যাটের বাংলা দরখাস্ত তৈরি, PDF ডাউনলোড ও A4 প্রিন্ট — লগইন ছাড়াই, মোবাইলে ইনস্টলযোগ্য।"
+    />
     <meta name="theme-color" content="#042f24" />
+    <meta name="color-scheme" content="light" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="দরখাস্ত" />
-    
+
     <link rel="manifest" href="/manifest.json" />
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
-    <link rel="apple-touch-icon" href="/icon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/icons/favicon-48.png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
 
-    <meta property="og:title" content="অফিসিয়াল দরখাস্ত প্রস্তুতকারক - Automated Application Writer PWA" />
-    <meta property="og:description" content="সরকারি প্রাথমিক বিদ্যালয়ের সহকারী ও প্রধান শিক্ষক এবং শিক্ষার্থীদের জন্য নিখুঁত বাংলা দরখাস্ত প্রস্তুত ও প্রিন্ট করার অফিশিয়াল PWA অ্যাপ।" />
     <meta property="og:type" content="website" />
+    <meta property="og:locale" content="bn_BD" />
+    <meta property="og:site_name" content="অফিসিয়াল দরখাস্ত প্রস্তুতকারক" />
+    <meta property="og:title" content="অফিসিয়াল দরখাস্ত প্রস্তুতকারক — বাংলা আবেদনপত্র ও A4 প্রিন্ট PWA" />
+    <meta
+      property="og:description"
+      content="শিক্ষক ও শিক্ষার্থীদের ১৫টি দরখাস্ত ফরম্যাট, লাইভ A4 প্রিভিউ, PDF ডাউনলোড ও প্রিন্ট। লগইন ছাড়াই ব্যবহার শুরু করুন।"
+    />
+    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="অফিসিয়াল দরখাস্ত প্রস্তুতকারক — ১৫টি ফরম্যাট, A4 প্রিন্ট-রেডি, লগইন ছাড়াই" />
     <meta name="twitter:card" content="summary_large_image" />
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@400;600;700&family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
-    
-    <style>
-      @page {
-        size: A4 portrait;
-        margin: 22mm 32mm 20mm 32mm;
-      }
-      @media print {
-        body {
-          background: #ffffff !important;
-          color: #000000 !important;
-          text-align: left !important;
-          -webkit-print-color-adjust: exact;
-          print-color-adjust: exact;
-        }
-        .no-print {
-          display: none !important;
-        }
-        .print-only-container {
-          box-shadow: none !important;
-          border: none !important;
-          padding: 0 !important;
-          margin: 0 !important;
-          width: 100% !important;
-          max-width: 100% !important;
-        }
-        .application-sheet {
-          box-shadow: none !important;
-          border: none !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          width: 100% !important;
-          min-height: auto !important;
-        }
-      }
-    </style>
+    <meta name="twitter:image" content="/og-image.png" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body class="bg-slate-100 text-slate-800 antialiased font-sans">
     <div id="root"></div>
+    <noscript>
+      এই অ্যাপটি ব্যবহার করতে ব্রাউজারে JavaScript চালু করুন।
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch((err) => {
-            console.log('SW registration note:', err);
-          });
-        });
-      }
-    </script>
+    <script src="/register-sw.js" defer></script>
   </body>
 </html>

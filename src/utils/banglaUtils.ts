@@ -142,7 +142,7 @@ export function formatDaysWithSuffix(rawDays: string | undefined, suffix: 'দ�
     return suffix === 'দিনের' ? '[দিনের সংখ্যা] দিনের' : '[দিনের সংখ্যা] দিন';
   }
   // Remove any trailing or duplicate 'দিন' / 'দিনের'
-  const cleaned = rawDays.replace(/দিনের?/g, '').trim();
+  const cleaned = rawDays.replace(/দিনের|দিন/g, '').trim();
   const banglaDigits = toBanglaNumber(cleaned);
   return `${banglaDigits} ${suffix}`;
 }

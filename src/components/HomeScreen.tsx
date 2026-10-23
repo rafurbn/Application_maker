@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { SubCategoryType, FormatTemplate, DashboardTheme } from '../types';
+import { SubCategoryType, FormatTemplate, DashboardTheme, SavedApplication } from '../types';
 import { ALL_TEMPLATES } from '../data/templates';
 import { DesignationSelector } from './DesignationSelector';
 import { AdSlot } from './AdSlot';
@@ -27,12 +27,14 @@ import {
   School,
   Files,
   Printer,
-  FolderOpen,
+  Eye,
   Building2,
   FileText,
   Sliders,
   Palette,
-  Download
+  Download,
+  ClipboardPaste,
+  Bookmark
 } from 'lucide-react';
 
 // Icon mapping matching the 15 templates with domain-specific coloring
@@ -154,26 +156,32 @@ const TEMPLATE_ENGLISH_TITLES: Record<string, string> = {
 
 interface HomeScreenProps {
   onSelectTemplate: (templateId: SubCategoryType) => void;
-  onDirectPrint?: (templateId: SubCategoryType) => void;
-  onOpenFolderUploader?: () => void;
+  onPreviewSample?: (templateId: SubCategoryType) => void;
+  onOpenImport?: () => void;
   globalDesignation: string;
   onUpdateGlobalDesignation: (desig: string) => void;
   theme: DashboardTheme;
   onThemeChange: (theme: DashboardTheme) => void;
   onInstallApp?: () => void;
   isInstallable?: boolean;
+  savedApps: SavedApplication[];
+  onOpenSaved: () => void;
+  onLoadSaved: (saved: SavedApplication) => void;
 }
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
   onSelectTemplate,
-  onDirectPrint,
-  onOpenFolderUploader,
+  onPreviewSample,
+  onOpenImport,
   globalDesignation,
   onUpdateGlobalDesignation,
   theme,
   onThemeChange,
   onInstallApp,
   isInstallable = false,
+  savedApps,
+  onOpenSaved,
+  onLoadSaved,
 }) => {
   const [activeTab, setActiveTab] = useState<'all' | 'employee' | 'student'>('all');
   const [selectedTag, setSelectedTag] = useState<string>('all');
@@ -285,7 +293,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
             }`}
           >
-            <span>⚪ ক্লিন হোয়াইট</span>
+            <span>🌑 ডার্ক সাইবার</span>
           </button>
         </div>
       </div>
@@ -368,11 +376,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </button>
 
             <button
-              onClick={onOpenFolderUploader}
+              onClick={onOpenImport}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-950/80 hover:bg-emerald-900/90 text-amber-300 border border-emerald-800/80 font-bold text-xs sm:text-sm transition-all"
             >
-              <FolderOpen className="w-4 h-4 text-amber-300" />
-              <span>পিসির Application ফোল্ডার</span>
+              <ClipboardPaste className="w-4 h-4 text-amber-300" />
+              <span>পুরোনো লেখা পেস্ট</span>
             </button>
 
             {onInstallApp && (
@@ -425,6 +433,42 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
         </div>
       </div>
+
+      {/* 3b. এই ডিভাইসে সংরক্ষিত দরখাস্ত */}
+      {savedApps.length > 0 && (
+        <section className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-2xs space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 flex-wrap">
+              <Bookmark className="w-4 h-4 text-emerald-700" />
+              <span>আমার সংরক্ষিত দরখাস্ত</span>
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                এই ডিভাইসে {savedApps.length}টি
+              </span>
+            </h3>
+            <button onClick={onOpenSaved} className="text-xs font-bold text-emerald-700 hover:underline">
+              সব দেখুন
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+            {savedApps.slice(0, 4).map((app) => (
+              <button
+                key={app.id}
+                onClick={() => onLoadSaved(app)}
+                className="text-left rounded-xl border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/60 p-3 transition-colors"
+              >
+                <p className="text-xs font-bold text-slate-800 line-clamp-1">{app.formatTitle}</p>
+                <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
+                  {app.applicantName} • {app.workplace}
+                </p>
+                <p className="text-[10px] text-slate-400 mt-1">
+                  {new Date(app.savedAt).toLocaleDateString("bn-BD")}
+                </p>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* 4. Filter and Search Bar */}
       <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-2xs space-y-3">
@@ -574,12 +618,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   <div className="pt-3.5 mt-3 border-t border-slate-100 flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => onDirectPrint ? onDirectPrint(tmpl.id) : onSelectTemplate(tmpl.id)}
+                      onClick={() => onPreviewSample ? onPreviewSample(tmpl.id) : onSelectTemplate(tmpl.id)}
                       className="flex-1 py-2 px-2.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
-                      title="নমুনা সরাসরি প্রিন্ট করুন"
+                      title="নমুনা তথ্য দিয়ে প্রিভিউ দেখুন"
                     >
-                      <Printer className="w-3.5 h-3.5 text-slate-500" />
-                      <span>প্রিন্ট</span>
+                      <Eye className="w-3.5 h-3.5 text-slate-500" />
+                      <span>নমুনা প্রিভিউ</span>
                     </button>
 
                     <button
@@ -611,11 +655,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
         <button
           type="button"
-          onClick={onOpenFolderUploader}
+          onClick={onOpenImport}
           className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-emerald-100 text-emerald-900 border border-emerald-300 font-bold text-xs shadow-2xs transition-colors shrink-0"
         >
-          <FolderOpen className="w-3.5 h-3.5 text-amber-600" />
-          <span>পিসির ফাইল থেকে ইনপুট করুন</span>
+          <ClipboardPaste className="w-3.5 h-3.5 text-amber-600" />
+          <span>লেখা পেস্ট করে আবেদন বানান</span>
         </button>
       </div>
 
@@ -694,12 +738,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   <div className="pt-3.5 mt-3 border-t border-slate-100 flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => onDirectPrint ? onDirectPrint(tmpl.id) : onSelectTemplate(tmpl.id)}
+                      onClick={() => onPreviewSample ? onPreviewSample(tmpl.id) : onSelectTemplate(tmpl.id)}
                       className="flex-1 py-2 px-2.5 rounded-xl border border-slate-200 hover:border-blue-500 hover:bg-blue-50 text-slate-700 hover:text-blue-800 text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
-                      title="নমুনা সরাসরি প্রিন্ট করুন"
+                      title="নমুনা তথ্য দিয়ে প্রিভিউ দেখুন"
                     >
-                      <Printer className="w-3.5 h-3.5 text-slate-500" />
-                      <span>প্রিন্ট</span>
+                      <Eye className="w-3.5 h-3.5 text-slate-500" />
+                      <span>নমুনা প্রিভিউ</span>
                     </button>
 
                     <button

@@ -7,7 +7,7 @@
 }
 
 .font-serif-bn {
-  font-family: 'Noto Serif Bengali', 'Tiro Bangla', Georgia, serif;
+  font-family: 'Noto Serif Bengali', Georgia, serif;
 }
 
 .font-sans-bn {
@@ -85,66 +85,39 @@
   border: 1px solid rgba(59, 130, 246, 0.22);
 }
 
-/* Application specific typography */
-.application-container {
-  text-align: left;
-}
-
-.application-body-text {
-  text-align: justify !important;
-  text-justify: inter-word !important;
-  line-height: 1.85 !important;
-  word-spacing: 0.05em;
-}
-
-/* A4 Sheet Preview styles */
-.a4-sheet {
-  width: 210mm;
-  min-height: 297mm;
-  padding: 22mm 22mm 25mm 25mm;
-  margin-left: auto;
-  margin-right: auto;
-  background: #ffffff;
-  color: #111827;
-  position: relative;
-  box-sizing: border-box;
+/* ======================================================== */
+/* Print: single source of truth.                           */
+/* The on-screen sheet pads 22mm top/bottom and 35mm sides, */
+/* so the page margin must match or print != preview.       */
+/* ======================================================== */
+@page {
+  size: A4 portrait;
+  margin: 22mm 35mm;
 }
 
 @media print {
-  @page {
-    size: A4 portrait;
-    margin: 15mm 20mm 15mm 20mm;
-  }
-  
   html, body {
     background: #ffffff !important;
     color: #000000 !important;
-    font-size: 14pt !important;
+    text-align: left !important;
     margin: 0 !important;
     padding: 0 !important;
-  }
-
-  .a4-sheet {
-    width: 100% !important;
-    min-height: auto !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    box-shadow: none !important;
-    border: none !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   .no-print {
     display: none !important;
   }
 
-  /* Force left alignment and justified body */
-  .application-container {
-    text-align: left !important;
-  }
-
-  .application-body-text {
-    text-align: justify !important;
-    text-justify: inter-word !important;
-    line-height: 1.8 !important;
+  .application-sheet,
+  .print-only-container {
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: auto !important;
   }
 }

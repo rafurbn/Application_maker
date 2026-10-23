@@ -1,9 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { FormatTemplate, ApplicationFormData } from '../types';
 import { type SaveResult } from '../utils/storage';
+import { collectDocumentIssues } from '../utils/validation';
 import { toBanglaDate, toBanglaNumber, formatDaysWithSuffix, getTodayISODate } from '../utils/banglaUtils';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 import {
   Printer,
   Download,
@@ -13,7 +12,8 @@ import {
   ZoomIn,
   ZoomOut,
   Copy,
-  AlignJustify
+  AlignJustify,
+  AlertTriangle
 } from 'lucide-react';
 
 interface DocumentPreviewProps {
@@ -22,6 +22,7 @@ interface DocumentPreviewProps {
   onSave: () => SaveResult;
   onLogGeneration: () => void;
   onBodyChange?: (customText: string) => void;
+  onNotify?: (message: string, type?: 'success' | 'info' | 'error') => void;
 }
 
 export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
@@ -30,6 +31,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   onSave,
   onLogGeneration,
   onBodyChange,
+  onNotify,
 }) => {
   const documentRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -243,6 +245,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   };
 
   const { mainBody, prayerText } = generateOfficialContent();
+  const documentIssues = collectDocumentIssues(template, formData, `${mainBody} ${prayerText}`);
 
   const handlePrint = () => {
     onLogGeneration();
@@ -250,34 +253,63 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   };
 
   const handleDownloadPdf = async () => {
-    if (!documentRef.current) return;
+    const element = documentRef.current;
+    if (!element) return;
     setIsDownloading(true);
     onLogGeneration();
 
     try {
-      const element = documentRef.current;
+      // Lazy-loaded so the ~700 kB rasteriser stays off the first-load critical path.
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import('html2canvas-pro'),
+        import('jspdf'),
+      ]);
+
       const canvas = await html2canvas(element, {
-        scale: 2.5,
+        scale: 2,
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
+        // The zoom slider scales an ancestor; capture at true size so every
+        // export is identical regardless of the on-screen zoom level.
+        onclone: (doc) => {
+          const wrap = doc.querySelector('[data-zoom-wrap]') as HTMLElement | null;
+          if (wrap) wrap.style.transform = 'none';
+        },
       });
 
-      const imgData = canvas.toDataURL('image/jpeg', 0.98);
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-      });
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageWidthMm = pdf.internal.pageSize.getWidth();
+      const pageHeightMm = pdf.internal.pageSize.getHeight();
+      const pxPerMm = canvas.width / pageWidthMm;
+      const pageHeightPx = Math.floor(pageHeightMm * pxPerMm);
 
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      let offset = 0;
+      let pageIndex = 0;
+      while (offset < canvas.height) {
+        const sliceHeightPx = Math.min(pageHeightPx, canvas.height - offset);
+        const slice = document.createElement('canvas');
+        slice.width = canvas.width;
+        slice.height = sliceHeightPx;
+        const ctx = slice.getContext('2d');
+        if (!ctx) throw new Error('ক্যানভাস আঁকা যায়নি');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, slice.width, sliceHeightPx);
+        ctx.drawImage(canvas, 0, offset, canvas.width, sliceHeightPx, 0, 0, canvas.width, sliceHeightPx);
 
-      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, Math.min(pdfHeight, 297));
+        if (pageIndex > 0) pdf.addPage();
+        pdf.addImage(slice.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pageWidthMm, sliceHeightPx / pxPerMm);
+
+        offset += sliceHeightPx;
+        pageIndex += 1;
+      }
+
       const safeTitle = (formData.subject || template.shortTitle || 'application').replace(/[/\\?%*:|"<>]/g, '_');
       pdf.save(`${safeTitle}.pdf`);
+      onNotify?.(`${pageIndex}টি পৃষ্ঠার PDF ডাউনলোড হয়েছে`, 'success');
     } catch (err) {
       console.error('PDF generation failed', err);
+      onNotify?.('PDF তৈরি করা যায়নি — "প্রিন্ট" বাটন থেকেও Save as PDF করতে পারবেন।', 'error');
     } finally {
       setIsDownloading(false);
     }
@@ -406,6 +438,27 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
 
       </div>
 
+      {/* Ready-to-print checklist — placeholders must not reach a signed application */}
+      {documentIssues.length > 0 && (
+        <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-300 text-amber-950 text-xs space-y-1.5 no-print shadow-2xs">
+          <div className="flex items-center gap-2 font-bold">
+            <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0" />
+            <span>
+              প্রিন্ট/PDF এর আগে {documentIssues.length}টি জায়গা পূরণ করুন
+              (খালি কাগজের জন্য ইচ্ছে করে ফেলে রাখলে এটি উপেক্ষা করুন):
+            </span>
+          </div>
+          <ul className="space-y-0.5 pl-6 list-disc text-amber-900">
+            {documentIssues.slice(0, 8).map((issue) => (
+              <li key={`${issue.kind}:${issue.label}`}>
+                <span className="font-semibold">{issue.label}</span>
+                {issue.kind === 'placeholder' ? ' — নমুনা/প্লেসহোল্ডার লেখা আছে' : ' — খালি'}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Body In-Place Editor Modal / Box (When active) */}
       {isEditingBody && (
         <div className="p-4 bg-amber-50/90 border border-amber-300 rounded-2xl space-y-2 no-print shadow-xs">
@@ -436,29 +489,30 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
       {/* Live A4 Document Sheet with Increased Side Margins (35mm) */}
       <div className="overflow-x-auto pb-6 flex justify-center">
         <div
+          data-zoom-wrap="true"
           style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top center' }}
           className="transition-transform duration-150"
         >
           <div
             ref={documentRef}
-            className={`w-[210mm] min-h-[297mm] pt-[22mm] pb-[22mm] px-[35mm] bg-white text-black shadow-lg rounded-sm border border-slate-200/60 leading-[1.85] font-serif ${fontSize} print-only-container application-sheet`}
+            className={`w-[210mm] min-h-[297mm] pt-[22mm] pb-[22mm] px-[35mm] bg-white text-black shadow-lg rounded-sm border border-slate-200/60 leading-[1.85] font-serif-bn ${fontSize} print-only-container application-sheet`}
             style={{
               boxSizing: 'border-box',
             }}
           >
             
             {/* Top Template Title (Left-Aligned, no 'ব্যবস্থাপক') */}
-            <div className="text-left font-bold text-[18px] text-black mb-8 leading-normal font-sans">
+            <div className="text-left font-bold text-[18px] text-black mb-8 leading-normal font-sans-bn">
               {template.title.replace(/\/?ব্যবস্থাপক/g, '')}
             </div>
 
             {/* 1. Date - Left Aligned in DD/MM/YYYY (e.g., ২২/১০/২০২৬) */}
-            <div className="text-left font-sans text-[15px] mb-5">
+            <div className="text-left font-sans-bn text-[15px] mb-5">
               তারিখ: <span className="font-semibold">{toBanglaDate(formData.date || getTodayISODate())}</span>
             </div>
 
             {/* 2. Recipient Information - Strictly Left Aligned, no 'ব্যবস্থাপক' */}
-            <div className="text-left space-y-0.5 mb-5 font-serif">
+            <div className="text-left space-y-0.5 mb-5 font-serif-bn">
               <div>বরাবর,</div>
               <div className="font-bold text-[16px]">{getRecipientDisplay()}</div>
               {formData.organization && <div>{formData.organization}</div>}
@@ -486,7 +540,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
 
             {/* 6. Main Body Text - Strictly Justified Alignment */}
             <div
-              className="mb-5 leading-[2] text-black font-serif"
+              className="mb-5 leading-[2] text-black font-serif-bn"
               style={{
                 textAlign: 'justify',
                 textJustify: 'inter-word',
@@ -507,7 +561,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
             {/* 7. Prayer Text (অতএব, ...) - Strictly Justified Alignment */}
             {prayerText && (
               <div
-                className="mb-6 leading-[2] text-black font-serif"
+                className="mb-6 leading-[2] text-black font-serif-bn"
                 style={{
                   textAlign: 'justify',
                   textJustify: 'inter-word',
@@ -527,7 +581,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
             )}
 
             {/* 8. Closing & Signoff - Strictly Left Aligned */}
-            <div className="text-left pt-2 space-y-0.5 font-serif">
+            <div className="text-left pt-2 space-y-0.5 font-serif-bn">
               <div className="font-semibold mb-5">নিবেদক,</div>
               <div className="font-bold text-[16px] text-black">
                 {getVal(formData.applicantName, '[নাম]')}
@@ -545,7 +599,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
 
             {/* 9. Attachments (সংযুক্তি) if any - Left Aligned */}
             {formData.attachments && (
-              <div className="mt-8 pt-4 border-t border-slate-300 text-left text-xs font-sans text-slate-800 space-y-1">
+              <div className="mt-8 pt-4 border-t border-slate-300 text-left text-xs font-sans-bn text-slate-800 space-y-1">
                 <div className="font-bold text-slate-950">সংযুক্তি:</div>
                 <div className="text-left">{formData.attachments}</div>
               </div>
