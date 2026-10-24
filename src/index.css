@@ -87,8 +87,11 @@
 
 /* ======================================================== */
 /* Print: single source of truth.                           */
-/* The on-screen sheet pads 22mm top/bottom and 35mm sides, */
-/* so the page margin must match or print != preview.       */
+/* The on-screen sheet pads 22mm top/bottom and 35mm sides. */
+/* On paper that same padding is supplied by @page and the  */
+/* sheet's own padding is removed, so the print dialog must */
+/* stay on Margins = Default — a custom margin in the dialog */
+/* replaces ours (documented in README).                    */
 /* ======================================================== */
 @page {
   size: A4 portrait;
@@ -110,6 +113,22 @@
     display: none !important;
   }
 
+  /* Screen-only layout wrappers (theme background, min-h-screen, flex
+     column, grid gutters, px/py/space-y padding) each add dead height,
+     and Chrome turns that height into extra blank sheets. They also make
+     the page box narrower than the @page margin, so the printed margins
+     drift from the preview. Flatten every wrapper marked for print. */
+  [data-print-shell] {
+    display: block !important;
+    background: none !important;
+    min-height: 0 !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    border-radius: 0 !important;
+  }
+
   /* On-screen zoom must never leak into paper or "Save as PDF". */
   [data-zoom-wrap],
   [data-zoom-size] {
@@ -120,7 +139,8 @@
 
   [data-preview-scroll] {
     overflow: visible !important;
-    padding-bottom: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   .application-sheet,

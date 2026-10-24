@@ -310,7 +310,7 @@ export default function App() {
   })();
 
   return (
-    <div className={`min-h-screen flex flex-col transition-colors duration-300 ${themeBgClass}`}>
+    <div data-print-shell="true" className={`min-h-screen flex flex-col transition-colors duration-300 ${themeBgClass}`}>
       <Header
         savedCount={savedApps.length}
         onOpenSaved={() => setIsSavedModalOpen(true)}
@@ -329,7 +329,7 @@ export default function App() {
         isInstalled={isInstalled}
       />
 
-      <main className="flex-1 pb-16">
+      <main data-print-shell="true" className="flex-1 pb-16">
         {!selectedTemplateId || !currentTemplate || !formData ? (
           <HomeScreen
             onSelectTemplate={handleSelectTemplate}
@@ -347,7 +347,7 @@ export default function App() {
             onLoadSaved={handleLoadSaved}
           />
         ) : (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+          <div data-print-shell="true" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-3 no-print">
               <button
                 onClick={() => {
@@ -406,7 +406,7 @@ export default function App() {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <div data-print-shell="true" className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
               <div className={`lg:col-span-5 no-print ${activeMobileTab === 'form' ? 'block' : 'hidden sm:block'}`}>
                 <ApplicationForm
                   template={currentTemplate}
@@ -417,7 +417,7 @@ export default function App() {
                 />
               </div>
 
-              <div className={`lg:col-span-7 ${activeMobileTab === 'preview' ? 'block' : 'hidden sm:block'}`}>
+              <div data-print-shell="true" className={`lg:col-span-7 ${activeMobileTab === 'preview' ? 'block' : 'hidden sm:block'}`}>
                 <DocumentPreview
                   template={currentTemplate}
                   formData={formData}

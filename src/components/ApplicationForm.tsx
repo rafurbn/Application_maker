@@ -26,6 +26,15 @@ export const ApplicationForm: React.FC<ApplicationFormProps> = ({
 }) => {
   const isEmployee = template.category === 'employee';
 
+  // Pasted or restored text can carry a channel the template never offered, and a
+  // select cannot display a value missing from its list — the form would then show
+  // something other than what the document prints.
+  const throughOptions = template.throughOptions ?? ['যথাযথ কর্তৃপক্ষ', 'সরাসরি'];
+  const throughValue = formData.through || throughOptions[0];
+  const throughList = throughOptions.includes(throughValue)
+    ? throughOptions
+    : [throughValue, ...throughOptions];
+
   // Handle start/end date changes and auto-calculate Bengali duration
   const handleStartDateChange = (val: string) => {
     const end = formData.leaveEndDate && formData.leaveEndDate >= val ? formData.leaveEndDate : val;
@@ -172,20 +181,15 @@ export const ApplicationForm: React.FC<ApplicationFormProps> = ({
                 মাধ্যম (Through)
               </label>
               <select
-                value={formData.through || 'যথাযথ কর্তৃপক্ষ'}
+                value={throughValue}
                 onChange={(e) => onChange({ through: e.target.value })}
                 className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm text-slate-800 focus:ring-2 focus:ring-emerald-600 focus:outline-hidden"
               >
-                {template.throughOptions?.map((opt) => (
+                {throughList.map((opt) => (
                   <option key={opt} value={opt}>
                     {opt}
                   </option>
-                )) || (
-                  <>
-                    <option value="যথাযথ কর্তৃপক্ষ">যথাযথ কর্তৃপক্ষ</option>
-                    <option value="সরাসরি">সরাসরি</option>
-                  </>
-                )}
+                ))}
               </select>
             </div>
 

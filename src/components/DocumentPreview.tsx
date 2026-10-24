@@ -19,6 +19,13 @@ import {
 /** 210mm at 96dpi — the fixed width of the A4 preview sheet below. */
 const A4_WIDTH_PX = 794;
 
+/** The catalogue index ("১.") belongs to our list, not to an official document. */
+function documentTitle(title: string): string {
+  return title
+    .replace(/^\s*[০-৯0-9]+[.)]?\s+/u, '')
+    .replace(/\/?ব্যবস্থাপক/g, '')
+}
+
 interface DocumentPreviewProps {
   template: FormatTemplate;
   formData: ApplicationFormData;
@@ -362,7 +369,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div data-print-shell="true" className="space-y-4">
       
       {/* Top Action Ribbon (No Print) */}
       <div className="bg-white rounded-2xl border border-slate-200/90 p-3 sm:p-4 shadow-xs flex flex-wrap items-center justify-between gap-3 no-print">
@@ -465,6 +472,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
           {/* Print Button */}
           <button
             onClick={handlePrint}
+            title='প্রিন্ট ডায়ালগে Margins = Default রাখুন — অফিসিয়াল মার্জিন (২২mm/৩৫mm) সেখান থেকেই আসে'
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold shadow-2xs transition-colors"
           >
             <Printer className="w-3.5 h-3.5 text-emerald-700" />
@@ -558,7 +566,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
             
               {/* Top Template Title (Left-Aligned, no 'ব্যবস্থাপক') */}
               <div className="text-left font-bold text-[18px] text-black mb-8 leading-normal font-sans-bn">
-                {template.title.replace(/\/?ব্যবস্থাপক/g, '')}
+                {documentTitle(template.title)}
               </div>
 
               {/* 1. Date - Left Aligned in DD/MM/YYYY (e.g., ২২/১০/২০২৬) */}
