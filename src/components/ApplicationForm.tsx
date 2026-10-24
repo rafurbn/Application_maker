@@ -1,100 +1,14 @@
 import React from 'react';
 import { FormatTemplate, ApplicationFormData } from '../types';
-import {
-  BANGLA_MONTHS,
-  calculateBanglaDuration,
-  toBanglaDate,
-  toBanglaNumber,
-  getTodayISODate,
-} from '../utils/banglaUtils';
+import { calculateBanglaDuration } from '../utils/banglaUtils';
 import { showsLeaveDateRange } from '../utils/validation';
+import { DateField } from './DateField';
 import { Building2, Calendar, RotateCcw, User, Wand2 } from 'lucide-react';
 
 function readFieldValue(data: ApplicationFormData, key: string): string {
   const value = (data as unknown as Record<string, unknown>)[key];
   return typeof value === 'string' ? value : '';
 }
-
-const ISO_DATE = /^(\d{4})-(\d{1,2})-(\d{1,2})$/;
-
-function daysInMonth(year: number, month: number): number {
-  return new Date(year, month, 0).getDate();
-}
-
-function splitDate(value: string | undefined): { year: number; month: number; day: number } {
-  const match = value ? ISO_DATE.exec(value) : null;
-  const today = getTodayISODate();
-  const year = match ? Number(match[1]) : Number(today.slice(0, 4));
-  const month = match ? Number(match[2]) : Number(today.slice(5, 7));
-  const day = match ? Number(match[3]) : Number(today.slice(8, 10));
-  return { year, month, day: Math.min(day, daysInMonth(year, month)) };
-}
-
-function joinDate(year: number, month: number, day: number): string {
-  return `${year}-${String(month).padStart(2, '0')}-${String(
-    Math.min(day, daysInMonth(year, month)),
-  ).padStart(2, '0')}`;
-}
-
-/**
- * A native date input prints in whatever order the browser locale prefers, which
- * on our users' phones means মাস/দিন/বছর. Three labelled dropdowns pin the order
- * to দিন/মাস/বছর on every device while the stored value stays ISO, so the
- * automatic day counter and the printed date keep working.
- */
-const BengaliDateField: React.FC<{ value: string; onChange: (iso: string) => void }> = ({
-  value,
-  onChange,
-}) => {
-  const { year, month, day } = splitDate(value);
-  const thisYear = new Date().getFullYear();
-  const years: number[] = [];
-  for (let y = thisYear + 1; y >= thisYear - 59; y--) years.push(y);
-  const yearList = years.includes(year) ? years : [year, ...years];
-  const selectClass =
-    'w-full px-2 py-2 rounded-xl border border-slate-300 bg-white text-sm text-slate-800 focus:ring-2 focus:ring-emerald-600 focus:outline-hidden';
-
-  return (
-    <div className="grid grid-cols-3 gap-2">
-      <select
-        aria-label="দিন"
-        className={selectClass}
-        value={day}
-        onChange={(e) => onChange(joinDate(year, month, Number(e.target.value)))}
-      >
-        {Array.from({ length: daysInMonth(year, month) }, (_, i) => i + 1).map((d) => (
-          <option key={d} value={d}>
-            {toBanglaNumber(String(d))}
-          </option>
-        ))}
-      </select>
-      <select
-        aria-label="মাস"
-        className={selectClass}
-        value={month}
-        onChange={(e) => onChange(joinDate(year, Number(e.target.value), day))}
-      >
-        {BANGLA_MONTHS.map((name, i) => (
-          <option key={name} value={i + 1}>
-            {name}
-          </option>
-        ))}
-      </select>
-      <select
-        aria-label="বছর"
-        className={selectClass}
-        value={year}
-        onChange={(e) => onChange(joinDate(Number(e.target.value), month, day))}
-      >
-        {yearList.map((y) => (
-          <option key={y} value={y}>
-            {toBanglaNumber(String(y))}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-};
 
 interface ApplicationFormProps {
   template: FormatTemplate;
@@ -201,10 +115,7 @@ export const ApplicationForm: React.FC<ApplicationFormProps> = ({
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 আবেদনের তারিখ (দিন/মাস/বছর) <span className="text-rose-500">*</span>
               </label>
-              <BengaliDateField value={formData.date || ''} onChange={(iso) => onChange({ date: iso })} />
-              <p className="mt-0.5 text-[11px] text-emerald-700 font-medium">
-                প্রিভিউতে দেখাবে: {toBanglaDate(formData.date || getTodayISODate())}
-              </p>
+              <DateField value={formData.date || ''} onChange={(iso) => onChange({ date: iso })} />
             </div>
 
             {/* Recipient Dropdown (ব্যবস্থাপক সম্পূর্ণ বাদ দেওয়া হয়েছে) */}
@@ -431,15 +342,10 @@ export const ApplicationForm: React.FC<ApplicationFormProps> = ({
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
                     যোগদানের তারিখ (দিন/মাস/বছর) <span className="text-rose-500">*</span>
                   </label>
-                  <BengaliDateField
+                  <DateField
                     value={formData.joiningDate || ''}
                     onChange={(iso) => onChange({ joiningDate: iso })}
                   />
-                  {formData.joiningDate && (
-                    <p className="mt-0.5 text-[11px] text-emerald-700 font-medium">
-                      দিন/মাস/বছর: {toBanglaDate(formData.joiningDate)}
-                    </p>
-                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -475,30 +381,14 @@ export const ApplicationForm: React.FC<ApplicationFormProps> = ({
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
                     শুরুর তারিখ
                   </label>
-                  <BengaliDateField
-                    value={formData.leaveStartDate || ''}
-                    onChange={handleStartDateChange}
-                  />
-                  {formData.leaveStartDate && (
-                    <p className="mt-1 text-[11px] text-emerald-700 font-medium">
-                      দিন/মাস/বছর: {toBanglaDate(formData.leaveStartDate)}
-                    </p>
-                  )}
+                  <DateField value={formData.leaveStartDate || ''} onChange={handleStartDateChange} />
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
                     শেষের তারিখ
                   </label>
-                  <BengaliDateField
-                    value={formData.leaveEndDate || ''}
-                    onChange={handleEndDateChange}
-                  />
-                  {formData.leaveEndDate && (
-                    <p className="mt-1 text-[11px] text-emerald-700 font-medium">
-                      দিন/মাস/বছর: {toBanglaDate(formData.leaveEndDate)}
-                    </p>
-                  )}
+                  <DateField value={formData.leaveEndDate || ''} onChange={handleEndDateChange} />
                 </div>
 
                 <div>
