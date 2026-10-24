@@ -44,7 +44,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   const [isZoomCustom, setIsZoomCustom] = useState(false);
   const [sheetHeightPx, setSheetHeightPx] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [fontSize, setFontSize] = useState<'text-sm' | 'text-base' | 'text-lg'>('text-sm');
+  const [fontSize, setFontSize] = useState<'text-[14px]' | 'text-[15px]' | 'text-[16px]'>('text-[15px]');
 
   const applyZoom = (next: number) => {
     setIsZoomCustom(true);
@@ -419,25 +419,25 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
           {/* Font Size Selector */}
           <div className="hidden sm:flex items-center border border-slate-200 rounded-xl overflow-hidden p-0.5 bg-slate-50">
             <button
-              onClick={() => setFontSize('text-sm')}
+              onClick={() => setFontSize('text-[14px]')}
               className={`px-2 py-1 text-xs rounded-lg font-medium transition-colors ${
-                fontSize === 'text-sm' ? 'bg-white shadow-2xs text-emerald-900 font-bold' : 'text-slate-500'
+                fontSize === 'text-[14px]' ? 'bg-white shadow-2xs text-emerald-900 font-bold' : 'text-slate-500'
               }`}
             >
               ছোট
             </button>
             <button
-              onClick={() => setFontSize('text-base')}
+              onClick={() => setFontSize('text-[15px]')}
               className={`px-2 py-1 text-xs rounded-lg font-medium transition-colors ${
-                fontSize === 'text-base' ? 'bg-white shadow-2xs text-emerald-900 font-bold' : 'text-slate-500'
+                fontSize === 'text-[15px]' ? 'bg-white shadow-2xs text-emerald-900 font-bold' : 'text-slate-500'
               }`}
             >
               স্বাভাবিক
             </button>
             <button
-              onClick={() => setFontSize('text-lg')}
+              onClick={() => setFontSize('text-[16px]')}
               className={`px-2 py-1 text-xs rounded-lg font-medium transition-colors ${
-                fontSize === 'text-lg' ? 'bg-white shadow-2xs text-emerald-900 font-bold' : 'text-slate-500'
+                fontSize === 'text-[16px]' ? 'bg-white shadow-2xs text-emerald-900 font-bold' : 'text-slate-500'
               }`}
             >
               বড়
@@ -573,7 +573,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
               {/* 2. Recipient Information - Strictly Left Aligned, no 'ব্যবস্থাপক' */}
               <div className="text-left space-y-0.5 mb-5 font-serif-bn">
                 <div>বরাবর,</div>
-                <div className="font-bold text-[1.15em]">{getRecipientDisplay()}</div>
+                <div className="font-bold">{getRecipientDisplay()}</div>
                 {formData.organization && <div>{formData.organization}</div>}
                 <div>
                   {[cleanUpazila, cleanDistrict].filter(Boolean).join(', ')}।
@@ -588,7 +588,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
               )}
 
               {/* 4. Subject - Left Aligned */}
-              <div className="text-left font-bold text-[1.15em] mb-5">
+              <div className="text-left font-bold mb-5">
                 বিষয়: {formData.subject || template.defaultSubject}
               </div>
 
@@ -643,7 +643,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
                   name is where the writer signs, so it is kept generous. */}
               <div className="text-left pt-4 space-y-0.5 font-serif-bn">
                 <div className="font-semibold mb-12">নিবেদক,</div>
-                <div className="font-bold text-[1.15em] text-black">
+                <div className="font-bold text-black">
                   {getVal(formData.applicantName, '[নাম]')}
                 </div>
                 <div>{getDesignationDisplay()}</div>
