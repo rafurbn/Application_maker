@@ -19,11 +19,18 @@ import {
 /** 210mm at 96dpi — the fixed width of the A4 preview sheet below. */
 const A4_WIDTH_PX = 794;
 
-/** The catalogue index ("১.") belongs to our list, not to an official document. */
+/**
+ * The catalogue label belongs to our list, not to an official application:
+ * the section index ("১.") and the Latin bracket notes ("(Casual Leave - CL)",
+ * "(TC)") are dropped so the paper carries only the plain Bengali subject.
+ */
 function documentTitle(title: string): string {
   return title
     .replace(/^\s*[০-৯0-9]+[.)]?\s+/u, '')
+    .replace(/\s*\([^)]*[A-Za-z][^)]*\)/g, '')
     .replace(/\/?ব্যবস্থাপক/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
 }
 
 interface DocumentPreviewProps {
@@ -472,7 +479,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
           {/* Print Button */}
           <button
             onClick={handlePrint}
-            title='প্রিন্ট ডায়ালগে Margins = Default রাখুন — অফিসিয়াল মার্জিন (২২mm/৩৫mm) সেখান থেকেই আসে'
+            title='প্রিন্ট ডায়ালগে Margins = Default রাখুন — অফিসিয়াল মার্জিন (২০mm/২৫mm) সেখান থেকেই আসে'
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold shadow-2xs transition-colors"
           >
             <Printer className="w-3.5 h-3.5 text-emerald-700" />
@@ -541,7 +548,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         </div>
       )}
 
-      {/* Live A4 Document Sheet with Increased Side Margins (35mm) */}
+      {/* Live A4 Document Sheet — padding mirrors @page so print == preview */}
       <div ref={scrollRef} data-preview-scroll="true" className="overflow-x-auto pb-6">
         <div
           data-zoom-size="true"
@@ -558,7 +565,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
           >
             <div
               ref={documentRef}
-              className={`w-[210mm] min-h-[297mm] pt-[22mm] pb-[22mm] px-[35mm] bg-white text-black shadow-lg rounded-sm border border-slate-200/60 leading-[1.85] font-serif-bn ${fontSize} print-only-container application-sheet`}
+              className={`w-[210mm] min-h-[297mm] pt-[20mm] pb-[20mm] px-[25mm] bg-white text-black shadow-lg rounded-sm border border-slate-200/60 leading-[1.85] font-serif-bn ${fontSize} print-only-container application-sheet`}
               style={{
                 boxSizing: 'border-box',
               }}

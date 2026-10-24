@@ -87,7 +87,7 @@
 
 /* ======================================================== */
 /* Print: single source of truth.                           */
-/* The on-screen sheet pads 22mm top/bottom and 35mm sides. */
+/* The on-screen sheet pads 20mm top/bottom and 25mm sides. */
 /* On paper that same padding is supplied by @page and the  */
 /* sheet's own padding is removed, so the print dialog must */
 /* stay on Margins = Default — a custom margin in the dialog */
@@ -95,7 +95,14 @@
 /* ======================================================== */
 @page {
   size: A4 portrait;
-  margin: 22mm 35mm;
+  margin: 20mm 25mm;
+}
+
+/* Government applications are typed, not typeset: the sheet carries no bold,
+   in the preview, on paper or in the exported PDF. */
+.application-sheet,
+.application-sheet * {
+  font-weight: 400;
 }
 
 @media print {
