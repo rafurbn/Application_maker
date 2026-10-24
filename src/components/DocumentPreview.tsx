@@ -639,9 +639,10 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
                 </div>
               )}
 
-              {/* 8. Closing & Signoff - Strictly Left Aligned */}
-              <div className="text-left pt-2 space-y-0.5 font-serif-bn">
-                <div className="font-semibold mb-5">নিবেদক,</div>
+              {/* 8. Closing & Signoff - Strictly Left Aligned. The gap above the
+                  name is where the writer signs, so it is kept generous. */}
+              <div className="text-left pt-4 space-y-0.5 font-serif-bn">
+                <div className="font-semibold mb-12">নিবেদক,</div>
                 <div className="font-bold text-[16px] text-black">
                   {getVal(formData.applicantName, '[নাম]')}
                 </div>
