@@ -19,20 +19,6 @@ import {
 /** 210mm at 96dpi — the fixed width of the A4 preview sheet below. */
 const A4_WIDTH_PX = 794;
 
-/**
- * The catalogue label belongs to our list, not to an official application:
- * the section index ("১.") and the Latin bracket notes ("(Casual Leave - CL)",
- * "(TC)") are dropped so the paper carries only the plain Bengali subject.
- */
-function documentTitle(title: string): string {
-  return title
-    .replace(/^\s*[০-৯0-9]+[.)]?\s+/u, '')
-    .replace(/\s*\([^)]*[A-Za-z][^)]*\)/g, '')
-    .replace(/\/?ব্যবস্থাপক/g, '')
-    .replace(/\s{2,}/g, ' ')
-    .trim();
-}
-
 interface DocumentPreviewProps {
   template: FormatTemplate;
   formData: ApplicationFormData;
@@ -337,29 +323,36 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
       const pxPerMm = canvas.width / pageWidthMm;
       const pageHeightPx = Math.floor(pageHeightMm * pxPerMm);
 
+      // The sheet is measured in whole CSS pixels, so a document that is exactly
+      // one A4 tall can measure a fraction of a millimetre over — and the old
+      // loop then printed a second page holding nothing but bottom padding.
+      // Anything up to ~1.2mm of overflow is absorbed into the last page.
+      const contentMm = element.offsetHeight / (element.offsetWidth / pageWidthMm);
+      const pageCount = Math.max(1, Math.ceil(contentMm / pageHeightMm - 0.004));
+
       let offset = 0;
-      let pageIndex = 0;
-      while (offset < canvas.height) {
-        const sliceHeightPx = Math.min(pageHeightPx, canvas.height - offset);
+      for (let pageIndex = 0; pageIndex < pageCount; pageIndex++) {
+        const remaining = canvas.height - offset;
+        const sliceHeightPx =
+          pageIndex === pageCount - 1 ? remaining : Math.min(pageHeightPx, remaining);
         const slice = document.createElement('canvas');
         slice.width = canvas.width;
-        slice.height = sliceHeightPx;
+        slice.height = Math.max(1, sliceHeightPx);
         const ctx = slice.getContext('2d');
         if (!ctx) throw new Error('ক্যানভাস আঁকা যায়নি');
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, slice.width, sliceHeightPx);
-        ctx.drawImage(canvas, 0, offset, canvas.width, sliceHeightPx, 0, 0, canvas.width, sliceHeightPx);
+        ctx.fillRect(0, 0, slice.width, slice.height);
+        ctx.drawImage(canvas, 0, offset, canvas.width, remaining, 0, 0, canvas.width, slice.height);
 
         if (pageIndex > 0) pdf.addPage();
-        pdf.addImage(slice.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pageWidthMm, sliceHeightPx / pxPerMm);
+        pdf.addImage(slice.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pageWidthMm, slice.height / pxPerMm);
 
         offset += sliceHeightPx;
-        pageIndex += 1;
       }
 
       const safeTitle = (formData.subject || template.shortTitle || 'application').replace(/[/\\?%*:|"<>]/g, '_');
       pdf.save(`${safeTitle}.pdf`);
-      onNotify?.(`${pageIndex}টি পৃষ্ঠার PDF ডাউনলোড হয়েছে`, 'success');
+      onNotify?.(`${pageCount}টি পৃষ্ঠার PDF ডাউনলোড হয়েছে`, 'success');
     } catch (err) {
       console.error('PDF generation failed', err);
       onNotify?.('PDF তৈরি করা যায়নি — "প্রিন্ট" বাটন থেকেও Save as PDF করতে পারবেন।', 'error');
@@ -570,12 +563,8 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
                 boxSizing: 'border-box',
               }}
             >
-            
-              {/* Top Template Title (Left-Aligned, no 'ব্যবস্থাপক') */}
-              <div className="text-left font-bold text-[18px] text-black mb-8 leading-normal font-sans-bn">
-                {documentTitle(template.title)}
-              </div>
-
+              {/* An official application carries no catalogue heading — the paper
+                  starts at the date, exactly like the hand-written one does. */}
               {/* 1. Date - Left Aligned in DD/MM/YYYY (e.g., ২২/১০/২০২৬) */}
               <div className="text-left font-sans-bn text-[15px] mb-5">
                 তারিখ: <span className="font-semibold">{toBanglaDate(formData.date || getTodayISODate())}</span>
