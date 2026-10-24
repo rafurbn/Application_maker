@@ -566,14 +566,14 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
               {/* An official application carries no catalogue heading — the paper
                   starts at the date, exactly like the hand-written one does. */}
               {/* 1. Date - Left Aligned in DD/MM/YYYY (e.g., ২২/১০/২০২৬) */}
-              <div className="text-left font-sans-bn text-[15px] mb-5">
+              <div className="text-left font-sans-bn mb-5">
                 তারিখ: <span className="font-semibold">{toBanglaDate(formData.date || getTodayISODate())}</span>
               </div>
 
               {/* 2. Recipient Information - Strictly Left Aligned, no 'ব্যবস্থাপক' */}
               <div className="text-left space-y-0.5 mb-5 font-serif-bn">
                 <div>বরাবর,</div>
-                <div className="font-bold text-[16px]">{getRecipientDisplay()}</div>
+                <div className="font-bold text-[1.15em]">{getRecipientDisplay()}</div>
                 {formData.organization && <div>{formData.organization}</div>}
                 <div>
                   {[cleanUpazila, cleanDistrict].filter(Boolean).join(', ')}।
@@ -588,7 +588,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
               )}
 
               {/* 4. Subject - Left Aligned */}
-              <div className="text-left font-bold text-[16px] mb-5">
+              <div className="text-left font-bold text-[1.15em] mb-5">
                 বিষয়: {formData.subject || template.defaultSubject}
               </div>
 
@@ -643,7 +643,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
                   name is where the writer signs, so it is kept generous. */}
               <div className="text-left pt-4 space-y-0.5 font-serif-bn">
                 <div className="font-semibold mb-12">নিবেদক,</div>
-                <div className="font-bold text-[16px] text-black">
+                <div className="font-bold text-[1.15em] text-black">
                   {getVal(formData.applicantName, '[নাম]')}
                 </div>
                 <div>{getDesignationDisplay()}</div>
@@ -659,7 +659,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
 
               {/* 9. Attachments (সংযুক্তি) if any - Left Aligned */}
               {formData.attachments && (
-                <div className="mt-8 pt-4 border-t border-slate-300 text-left text-xs font-sans-bn text-slate-800 space-y-1">
+                <div className="mt-8 pt-4 border-t border-slate-300 text-left font-sans-bn text-slate-800 space-y-1">
                   <div className="font-bold text-slate-950">সংযুক্তি:</div>
                   <div className="text-left">{formData.attachments}</div>
                 </div>
