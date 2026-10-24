@@ -3,7 +3,7 @@
  */
 
 const BANGLA_NUMBERS = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
-const BANGLA_MONTHS = [
+export const BANGLA_MONTHS = [
   'জানুয়ারি',
   'ফেব্রুয়ারি',
   'মার্চ',

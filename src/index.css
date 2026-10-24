@@ -87,15 +87,15 @@
 
 /* ======================================================== */
 /* Print: single source of truth.                           */
-/* The on-screen sheet pads 20mm top/bottom and 25mm sides. */
-/* On paper that same padding is supplied by @page and the  */
-/* sheet's own padding is removed, so the print dialog must */
-/* stay on Margins = Default — a custom margin in the dialog */
-/* replaces ours (documented in README).                    */
+/* The on-screen sheet pads 30mm top, 20mm bottom, 25mm     */
+/* sides. On paper that same padding is supplied by @page   */
+/* and the sheet's own padding is removed, so the print     */
+/* dialog must stay on Margins = Default — a custom margin  */
+/* in the dialog replaces ours (documented in README).      */
 /* ======================================================== */
 @page {
   size: A4 portrait;
-  margin: 20mm 25mm;
+  margin: 30mm 25mm 20mm;
 }
 
 /* Government applications are typed, not typeset: the sheet carries no bold,

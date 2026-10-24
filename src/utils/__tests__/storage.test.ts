@@ -10,6 +10,8 @@ import {
   newId,
   readIdentity,
   readPreferences,
+  rememberFields,
+  applyRememberedFields,
   saveApplicationLocally,
   writePreferences,
 } from '../storage';
@@ -172,5 +174,30 @@ describe('eraseDeviceData', () => {
     expect(localStorage.getItem('template_count_casual_leave')).toBeNull();
     expect(localStorage.getItem('app_generation_stats')).toBeNull();
     expect(localStorage.getItem('somebody_elses_key')).toBe('keep me');
+  });
+});
+
+describe('remembered fields', () => {
+  it('keeps what the writer typed and prefills the next application', () => {
+    rememberFields({ applicantName: 'মোঃ রফিকুল ইসলাম', workplace: 'কালাইউরা সরকারি প্রাথমিক বিদ্যালয়' });
+    const next = applyRememberedFields(getDefaultFormData(casualLeave));
+
+    expect(next.applicantName).toBe('মোঃ রফিকুল ইসলাম');
+    expect(next.workplace).toBe('কালাইউরা সরকারি প্রাথমিক বিদ্যালয়');
+  });
+
+  it('never remembers the parts that belong to one application', () => {
+    rememberFields({ date: '2026-01-01', subject: 'ছুটি', totalDays: '৫ দিন', applicantName: 'রফিক' });
+    const stored = readPreferences().remembered;
+
+    expect(stored).toEqual({ applicantName: 'রফিক' });
+  });
+
+  it('drops a value the user cleared', () => {
+    rememberFields({ mobile: '০১৭১১-১১২২৩৩' });
+    rememberFields({ mobile: '' });
+    const next = applyRememberedFields({ ...getDefaultFormData(casualLeave), mobile: 'ধরা তথ্য' });
+
+    expect(next.mobile).toBe('ধরা তথ্য');
   });
 });

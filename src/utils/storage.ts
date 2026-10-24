@@ -23,11 +23,14 @@ export interface SaveResult {
 export interface Preferences {
   theme: DashboardTheme;
   globalDesignation: string;
+  /** Values the writer types again and again — see REMEMBERED_FIELDS. */
+  remembered: Record<string, string>;
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
   theme: 'executive',
   globalDesignation: 'সহকারী শিক্ষক',
+  remembered: {},
 };
 
 function safeRemove(key: string) {
@@ -123,6 +126,47 @@ export function writePreferences(patch: Partial<Preferences>): Preferences {
     console.error('Failed to store preferences', e);
   }
   return next;
+}
+
+/**
+ * A teacher writes nearly the same application every week, so the fields that
+ * identify the writer are kept on the device and pre-filled next time. Dates,
+ * subject, leave reasons and day counts are deliberately left out — those belong
+ * to the one application being written, and pre-filling them would print a stale
+ * value that looks as if the user typed it.
+ */
+export const REMEMBERED_FIELDS: (keyof ApplicationFormData)[] = [
+  'applicantName',
+  'customDesignation',
+  'workplace',
+  'organization',
+  'upazilaOrArea',
+  'district',
+  'mobile',
+  'fatherOrGuardianName',
+  'studentClass',
+  'rollNumber',
+];
+
+export function rememberFields(fields: Partial<ApplicationFormData>) {
+  const patch: Record<string, string> = {};
+  for (const key of REMEMBERED_FIELDS) {
+    const value = fields[key];
+    if (typeof value === 'string') patch[key] = value.trim();
+  }
+  if (Object.keys(patch).length === 0) return;
+  const prefs = readPreferences();
+  writePreferences({ remembered: { ...prefs.remembered, ...patch } });
+}
+
+export function applyRememberedFields(data: ApplicationFormData): ApplicationFormData {
+  const remembered = readPreferences().remembered;
+  const next = { ...data } as Record<string, unknown>;
+  for (const key of REMEMBERED_FIELDS) {
+    const value = remembered[key];
+    if (typeof value === 'string' && value !== '') next[key] = value;
+  }
+  return next as unknown as ApplicationFormData;
 }
 
 export interface Identity {

@@ -44,7 +44,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   const [isZoomCustom, setIsZoomCustom] = useState(false);
   const [sheetHeightPx, setSheetHeightPx] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [fontSize, setFontSize] = useState<'text-sm' | 'text-base' | 'text-lg'>('text-base');
+  const [fontSize, setFontSize] = useState<'text-sm' | 'text-base' | 'text-lg'>('text-sm');
 
   const applyZoom = (next: number) => {
     setIsZoomCustom(true);
@@ -472,7 +472,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
           {/* Print Button */}
           <button
             onClick={handlePrint}
-            title='প্রিন্ট ডায়ালগে Margins = Default রাখুন — অফিসিয়াল মার্জিন (২০mm/২৫mm) সেখান থেকেই আসে'
+            title='প্রিন্ট ডায়ালগে Margins = Default রাখুন — অফিসিয়াল মার্জিন (উপরে ৩০mm, পাশে ২৫mm, নিচে ২০mm) সেখান থেকেই আসে'
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold shadow-2xs transition-colors"
           >
             <Printer className="w-3.5 h-3.5 text-emerald-700" />
@@ -558,7 +558,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
           >
             <div
               ref={documentRef}
-              className={`w-[210mm] min-h-[297mm] pt-[20mm] pb-[20mm] px-[25mm] bg-white text-black shadow-lg rounded-sm border border-slate-200/60 leading-[1.85] font-serif-bn ${fontSize} print-only-container application-sheet`}
+              className={`w-[210mm] min-h-[297mm] pt-[30mm] pb-[20mm] px-[25mm] bg-white text-black shadow-lg rounded-sm border border-slate-200/60 leading-[1.85] font-serif-bn ${fontSize} print-only-container application-sheet`}
               style={{
                 boxSizing: 'border-box',
               }}

@@ -1,5 +1,5 @@
 import { FormatTemplate, ApplicationFormData } from '../types';
-import { toBanglaDate, getTodayISODate } from '../utils/banglaUtils';
+import { getTodayISODate } from '../utils/banglaUtils';
 
 // সহকারী শিক্ষক পদবী সবার শীর্ষে রাখা হয়েছে
 export const TEACHER_DESIGNATIONS = [
@@ -494,7 +494,7 @@ export function getSampleFormData(template: FormatTemplate): ApplicationFormData
 
   const sample: ApplicationFormData = {
     ...getDefaultFormData(template),
-    date: toBanglaDate(today),
+    date: today,
     applicantName: isEmployee ? 'মোছাঃ ফাতেমা আক্তার' : 'তাহমিদ আহমেদ',
     designation: isEmployee ? 'সহকারী শিক্ষক' : 'শিক্ষার্থী', // সহকারী শিক্ষক ডিফল্ট
     organization: isEmployee
@@ -546,7 +546,7 @@ export function getDefaultFormData(template: FormatTemplate): ApplicationFormDat
   const today = getTodayISODate();
 
   const base: ApplicationFormData = {
-    date: toBanglaDate(today),
+    date: today,
     recipient: template.defaultRecipient,
     customRecipient: '',
     organization: '',

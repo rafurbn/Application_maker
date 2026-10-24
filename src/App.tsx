@@ -7,6 +7,8 @@ import {
   deleteSavedApplication,
   readPreferences,
   writePreferences,
+  rememberFields,
+  applyRememberedFields,
   exportBackup,
   importBackup,
   eraseDeviceData,
@@ -62,7 +64,7 @@ export default function App() {
     const templateParam = params.get('template');
     const deepLinked = templateParam ? ALL_TEMPLATES.find((t) => t.id === templateParam) : undefined;
     if (deepLinked) {
-      const initial = getDefaultFormData(deepLinked);
+      const initial = applyRememberedFields(getDefaultFormData(deepLinked));
       if (prefs.globalDesignation) initial.designation = prefs.globalDesignation;
       setSelectedTemplateId(deepLinked.id);
       setFormData(initial);
@@ -109,7 +111,9 @@ export default function App() {
   const openTemplate = (templateId: SubCategoryType, useSample: boolean) => {
     const template = ALL_TEMPLATES.find((t) => t.id === templateId);
     if (!template) return;
-    const initial = useSample ? getSampleFormData(template) : getDefaultFormData(template);
+    const initial = useSample
+      ? getSampleFormData(template)
+      : applyRememberedFields(getDefaultFormData(template));
     if (globalDesignation) initial.designation = globalDesignation;
     setSelectedTemplateId(templateId);
     setFormData(initial);
@@ -133,12 +137,13 @@ export default function App() {
 
   const handleFormChange = (updatedFields: Partial<ApplicationFormData>) => {
     setFormData((prev) => (prev ? { ...prev, ...updatedFields } : null));
+    rememberFields(updatedFields);
   };
 
   const handleResetForm = () => {
     if (!currentTemplate) return;
     openTemplate(currentTemplate.id, false);
-    showToast('ফর্ম নতুনভাবে খোলা হয়েছে', 'info');
+    showToast('ফর্ম নতুনভাবে খোলা হয়েছে — আপনার নাম-ঠিকানা বজায় আছে', 'info');
   };
 
   const handleFillSample = () => {
@@ -151,7 +156,7 @@ export default function App() {
     if (!currentTemplate || !formData) {
       const template = ALL_TEMPLATES.find((t) => t.id === 'casual_leave');
       if (template) {
-        const initial = getDefaultFormData(template);
+        const initial = applyRememberedFields(getDefaultFormData(template));
         if (globalDesignation) initial.designation = globalDesignation;
         setSelectedTemplateId(template.id);
         setFormData({ ...initial, ...fields });
