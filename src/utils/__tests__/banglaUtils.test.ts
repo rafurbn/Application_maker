@@ -36,6 +36,10 @@ describe('toBanglaNumericDate', () => {
   it('falls back to the current day when empty', () => {
     expect(toBanglaNumericDate('')).toMatch(/^[০-৯]{2}\/[০-৯]{2}\/[০-৯]{4}$/);
   });
+
+  it('drops the time part of a stored timestamp', () => {
+    expect(toBanglaNumericDate('2026-10-25T06:39:17.576Z')).toBe('২৫/১০/২০২৬');
+  });
 });
 
 describe('toBanglaDateWords', () => {

@@ -90,7 +90,10 @@ export function toBanglaNumericDate(isoDateString?: string): string {
     return toBanglaNumber(`${d}/${m}/${y}`);
   }
 
-  const trimmed = isoDateString.trim();
+  const raw = isoDateString.trim();
+  // Entries read back from storage are full timestamps ("2026-10-25T06:39:17.576Z");
+  // only the date part should reach the paper or a list.
+  const trimmed = raw.replace(/^(\d{4}-\d{2}-\d{2})T[0-9:.]+Z$/, '$1');
 
   // If already formatted like DD/MM/YYYY or DD-MM-YYYY
   if (/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}$/.test(trimmed)) {

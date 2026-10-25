@@ -22,6 +22,7 @@ import { HomeScreen } from './components/HomeScreen';
 import { ApplicationForm } from './components/ApplicationForm';
 import { DocumentPreview } from './components/DocumentPreview';
 import { SavedApplicationsModal } from './components/SavedApplicationsModal';
+import { SavedApplicationsPanel } from './components/SavedApplicationsPanel';
 import { AdminPanel } from './components/AdminPanel';
 import { Modal } from './components/Modal';
 import { TextImportPanel } from './components/TextImportPanel';
@@ -419,6 +420,16 @@ export default function App() {
                   onChange={handleFormChange}
                   onReset={handleResetForm}
                   onFillSample={handleFillSample}
+                />
+
+                <SavedApplicationsPanel
+                  savedApps={savedApps}
+                  onSave={() => {
+                    handleSaveApplication();
+                  }}
+                  onLoad={handleLoadSaved}
+                  onDelete={handleDeleteSaved}
+                  onViewAll={() => setIsSavedModalOpen(true)}
                 />
               </div>
 
