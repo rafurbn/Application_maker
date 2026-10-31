@@ -499,7 +499,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
           <div className="flex items-center gap-2 font-bold">
             <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0" />
             <span>
-              প্রিন্ট/PDF এর আগে {documentIssues.length}টি জায়গা পূরণ করুন
+              প্রিন্ট/PDF এর আগে {toBanglaNumber(documentIssues.length)}টি জায়গা পূরণ করুন
               (খালি কাগজের জন্য ইচ্ছে করে ফেলে রাখলে এটি উপেক্ষা করুন):
             </span>
           </div>
