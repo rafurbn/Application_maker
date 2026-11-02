@@ -187,7 +187,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         const cEnd = formData.leaveEndDate ? toBanglaDate(formData.leaveEndDate) : '[ফেরার তারিখ]';
         const daysExact = formatDaysWithSuffix(days, 'দিন');
         return {
-          mainBody: `সবিনয় নিবেদন এই যে, আমি নিম্নস্বাক্ষরকারী ${cleanWorkplace}, ${cleanUpazila}, ${cleanDistrict} এর ${desig}। আমার ${exPurpose}-এর উদ্দেশ্যে আগামী ${cStart} হতে ${cEnd} পর্যন্ত মোট ${daysExact} ${country} ভ্রমণের প্রয়োজন। উক্ত ভ্রমণের যাবতীয় খরচ আমি নিজস্ব তহবিল থেকে বহন করব এবং এতে সরকারের বা প্রতিষ্ঠানের কোনো আর্থিক সংশ্লেষ থাকবে না।`,
+          mainBody: `সবিনয় নিবেদন এই যে, আমি নিম্নস্বাক্ষরকারী ${cleanWorkplace}, ${cleanUpazila}, ${cleanDistrict} এর ${desig}। আমার ${exPurpose} আগামী ${cStart} হতে ${cEnd} পর্যন্ত মোট ${daysExact} ${country} ভ্রমণের প্রয়োজন। উক্ত ভ্রমণের যাবতীয় খরচ আমি নিজস্ব তহবিল থেকে বহন করব এবং এতে সরকারের বা প্রতিষ্ঠানের কোনো আর্থিক সংশ্লেষ থাকবে না।`,
           prayerText: `অতএব, বিনীত প্রার্থনা এই যে, আমার অনুকূলে উক্ত মেয়াদের জন্য বহিঃবাংলাদেশ ছুটি (Ex-Bangladesh Leave) মঞ্জুর করতে আপনার সদয় আদেশ কামনা করছি।`,
         };
       }
@@ -558,7 +558,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
           >
             <div
               ref={documentRef}
-              className={`w-[210mm] min-h-[297mm] pt-[30mm] pb-[20mm] px-[25mm] bg-white text-black shadow-lg rounded-sm border border-slate-200/60 leading-[1.85] font-serif-bn ${fontSize} print-only-container application-sheet`}
+              className={`w-[210mm] min-h-[297mm] pt-[30mm] pb-[20mm] px-[25mm] bg-white text-black shadow-lg rounded-sm border border-slate-200/60 leading-[1.85] bn-serif ${fontSize} print-only-container application-sheet`}
               style={{
                 boxSizing: 'border-box',
               }}
@@ -566,12 +566,12 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
               {/* An official application carries no catalogue heading — the paper
                   starts at the date, exactly like the hand-written one does. */}
               {/* 1. Date - Left Aligned in DD/MM/YYYY (e.g., ২২/১০/২০২৬) */}
-              <div className="text-left font-sans-bn mb-5">
-                তারিখ: <span className="font-semibold">{toBanglaDate(formData.date || getTodayISODate())}</span>
+              <div className="text-left mb-5 bn-serif">
+                তারিখ: <span>{toBanglaDate(formData.date || getTodayISODate())}</span>
               </div>
 
               {/* 2. Recipient Information - Strictly Left Aligned, no 'ব্যবস্থাপক' */}
-              <div className="text-left space-y-0.5 mb-5 font-serif-bn">
+              <div className="text-left space-y-0.5 mb-5 bn-serif">
                 <div>বরাবর,</div>
                 <div className="font-bold">{getRecipientDisplay()}</div>
                 {formData.organization && <div>{formData.organization}</div>}
@@ -599,7 +599,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
 
               {/* 6. Main Body Text - Strictly Justified Alignment */}
               <div
-                className="mb-5 leading-[2] text-black font-serif-bn"
+                className="mb-5 leading-[2] text-black bn-serif"
                 style={{
                   textAlign: 'justify',
                   textJustify: 'inter-word',
@@ -620,7 +620,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
               {/* 7. Prayer Text (অতএব, ...) - Strictly Justified Alignment */}
               {prayerText && (
                 <div
-                  className="mb-6 leading-[2] text-black font-serif-bn"
+                  className="mb-6 leading-[2] text-black bn-serif"
                   style={{
                     textAlign: 'justify',
                     textJustify: 'inter-word',
@@ -641,7 +641,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
 
               {/* 8. Closing & Signoff - Strictly Left Aligned. The gap above the
                   name is where the writer signs, so it is kept generous. */}
-              <div className="text-left pt-4 space-y-0.5 font-serif-bn">
+              <div className="text-left pt-4 space-y-0.5 bn-serif">
                 <div className="font-semibold mb-12">নিবেদক,</div>
                 <div className="font-bold text-black">
                   {getVal(formData.applicantName, '[নাম]')}

@@ -10,6 +10,16 @@
   font-family: 'Noto Serif Bengali', Georgia, serif;
 }
 
+/* Noto Serif Bengali leaves the khanda-ta (ৎ) a full-height, oversized glyph, so
+   inside an otherwise uniform paragraph it looks broken. This face shapes it at
+   the right size and weight while matching the serif style of the sheet. */
+.bn-serif {
+  /* Noto Sans Bengali UI renders khanda-ta (ৎ) at the same size as the rest of
+     the line, where Noto Serif Bengali blows it up to full height; it keeps the
+     serif face as the fallback if that one is unavailable. */
+  font-family: 'Noto Sans Bengali UI', 'Noto Sans Bengali', 'Noto Serif Bengali', Georgia, serif;
+}
+
 .font-sans-bn {
   font-family: 'Noto Sans Bengali', sans-serif;
 }
