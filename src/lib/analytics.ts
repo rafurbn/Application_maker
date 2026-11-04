@@ -84,6 +84,21 @@ export async function sendHeartbeat(payload: Heartbeat): Promise<boolean> {
   }
 }
 
+/** A transport failure — the server never answered, so no token was judged. */
+export function isNetworkFailure(err: unknown): boolean {
+  return err instanceof Error && err.name === 'NetworkFailure';
+}
+
+function networkFailure(): Error {
+  // A network/CORS failure says nothing about the token, so never let the
+  // browser's bare "Failed to fetch" through as if the password were wrong.
+  const err = new Error(
+    'সার্ভারের সাথে সংযোগ হয়নি — VITE_SUPABASE_URL ঠিক আছে কি না এবং admin-stats ফাংশন ডিপ্লয় করা আছে কি না দেখুন।',
+  );
+  err.name = 'NetworkFailure';
+  return err;
+}
+
 export async function fetchAdminStats(token: string): Promise<AdminStats> {
   if (!isRemoteAnalyticsEnabled || !SUPABASE_URL) {
     throw new Error('রেমোট পরিসংখ্যান এখনো চালু নয়।');
@@ -102,13 +117,15 @@ export async function fetchAdminStats(token: string): Promise<AdminStats> {
       body: JSON.stringify({}),
     });
   } catch {
-    // A network/CORS failure says nothing about the token, so never let the
-    // browser's bare "Failed to fetch" through as if the password were wrong.
-    throw new Error(
-      'সার্ভারের সাথে সংযোগ হয়নি — VITE_SUPABASE_URL ঠিক আছে কি না এবং admin-stats ফাংশন ডিপ্লয় করা আছে কি না দেখুন।',
-    );
+    throw networkFailure();
+  }
+  if (!res.ok && res.status !== 401 && res.status !== 403 && res.status >= 500) {
+    throw networkFailure();
   }
   if (res.status === 401 || res.status === 403) throw new Error('ভুল অ্যাডমিন টোকেন।');
+  if (res.status === 404) {
+    throw new Error('admin-stats ফাংশন পাওয়া যায়নি — supabase functions deploy admin-stats করুন।');
+  }
   if (res.status === 404) {
     throw new Error('admin-stats ফাংশন পাওয়া যায়নি — supabase functions deploy admin-stats করুন।');
   }

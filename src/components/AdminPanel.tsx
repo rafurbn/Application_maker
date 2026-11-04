@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { ALL_TEMPLATES } from '../data/templates';
 import { getSavedApplications, analyticsResetLocal, type LocalStatsSnapshot } from '../utils/storage';
-import { fetchAdminStats, isRemoteAnalyticsEnabled, isRemoteAnalyticsMisconfigured, type AdminStats } from '../lib/analytics';
+import { fetchAdminStats, isNetworkFailure, isRemoteAnalyticsEnabled, isRemoteAnalyticsMisconfigured, type AdminStats } from '../lib/analytics';
 import { toBanglaStamp } from '../utils/banglaUtils';
 import { Modal } from './Modal';
 
@@ -63,6 +63,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, localSt
   const [remoteStats, setRemoteStats] = useState<AdminStats | null>(null);
   const [remoteError, setRemoteError] = useState('');
   const [remoteLoading, setRemoteLoading] = useState(false);
+  /** Server could not be reached, so this session runs on the device passphrase. */
+  const [isOfflineFallback, setIsOfflineFallback] = useState(false);
   const [isChangingPass, setIsChangingPass] = useState(false);
   const [newPassInput, setNewPassInput] = useState('');
   const [confirmPassInput, setConfirmPassInput] = useState('');
@@ -129,6 +131,20 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, localSt
       } catch (err) {
         sessionStorage.removeItem('admin_session_token');
         setRemoteStats(null);
+        // The server is unreachable, so no token can be judged. Let the owner
+        // still get in on this device instead of locking them out entirely.
+        if (isNetworkFailure(err)) {
+          const local = readStoredPassphrase();
+          if (!local || local === (await sha256(value))) {
+            if (!local) localStorage.setItem(PASSPHRASE_KEY, await sha256(value));
+            setNeedsSetup(false);
+            setIsAuthenticated(true);
+            setIsOfflineFallback(true);
+            setLoginError('');
+            loadLocalSnapshot();
+            return;
+          }
+        }
         setLoginError(err instanceof Error ? err.message : 'টোকেন গ্রহণযোগ্য নয়।');
         return;
       }
@@ -162,6 +178,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, localSt
     setIsAuthenticated(false);
     setPasswordInput('');
     setShowPassword(false);
+    setIsOfflineFallback(false);
     setIsChangingPass(false);
     setNewPassInput('');
     setConfirmPassInput('');
@@ -254,7 +271,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, localSt
             <h4 className="text-lg font-extrabold text-slate-900">অ্যাডমিন প্রবেশ</h4>
             <p className="text-xs text-slate-500 mt-1">
               {isRemoteEnabled
-                ? 'সুপাবেজ সংযুক্ত — অ্যাডমিন টোকেন দিয়ে প্রবেশ করুন, পরিসংখ্যান সার্ভার থেকে আসবে।'
+                ? 'সুপাবেজ সংযুক্ত — অ্যাডমিন টোকেন দিন; সার্ভারে সংযোগ না হলে এই ডিভাইসের পাসওয়ার্ডও গ্রহণযোগ্য।'
                 : needsSetup
                   ? 'এই ব্রাউজারে প্রথমবার: একটি অ্যাডমিন পাসওয়ার্ড সেট করুন (শুধু এই ডিভাইসেই থাকে)।'
                   : 'সেট করা পাসওয়ার্ড দিন।'}
@@ -415,19 +432,25 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, localSt
                   <span>সার্ভার থেকে আনুন</span>
                 </button>
               )}
-              <button
-                type="button"
-                onClick={() => {
-                  setIsChangingPass((v) => !v);
-                  setPassChangeMsg(null);
-                  setNewPassInput('');
-                  setConfirmPassInput('');
-                }}
-                className="flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors"
-              >
-                <KeyRound className="w-3.5 h-3.5" />
-                <span>পাসওয়ার্ড পরিবর্তন</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsChangingPass((v) => !v);
+                    setPassChangeMsg(null);
+                    setNewPassInput('');
+                    setConfirmPassInput('');
+                  }}
+                  disabled={isRemoteEnabled && !isOfflineFallback}
+                  title={
+                    isRemoteEnabled && !isOfflineFallback
+                      ? 'সার্ভার সংযুক্ত হলে অ্যাডমিন টোকেন বদলানো যায় না'
+                      : 'এই ডিভাইসের অ্যাডমিন পাসওয়ার্ড বদলান'
+                  }
+                  className="flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <KeyRound className="w-3.5 h-3.5" />
+                  <span>পাসওয়ার্ড পরিবর্তন</span>
+                </button>
               <button
                 onClick={handleLogout}
                 className="flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors"
