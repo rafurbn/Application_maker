@@ -172,7 +172,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, localSt
 
   const handleChangePassphrase = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isRemoteEnabled) return;
     const next = newPassInput.trim();
     if (next.length < 6) {
       setPassChangeMsg({ ok: false, text: 'নতুন পাসওয়ার্ড অন্তত ৬ অক্ষরের হতে হবে।' });
@@ -416,21 +415,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, localSt
                   <span>সার্ভার থেকে আনুন</span>
                 </button>
               )}
-              {!isRemoteEnabled && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsChangingPass((v) => !v);
-                    setPassChangeMsg(null);
-                    setNewPassInput('');
-                    setConfirmPassInput('');
-                  }}
-                  className="flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors"
-                >
-                  <KeyRound className="w-3.5 h-3.5" />
-                  <span>পাসওয়ার্ড পরিবর্তন</span>
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsChangingPass((v) => !v);
+                  setPassChangeMsg(null);
+                  setNewPassInput('');
+                  setConfirmPassInput('');
+                }}
+                className="flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors"
+              >
+                <KeyRound className="w-3.5 h-3.5" />
+                <span>পাসওয়ার্ড পরিবর্তন</span>
+              </button>
               <button
                 onClick={handleLogout}
                 className="flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors"
@@ -441,15 +438,22 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, localSt
             </div>
           </div>
 
-          {!isRemoteEnabled && isChangingPass && (
+          {isChangingPass && (
             <form
               onSubmit={handleChangePassphrase}
               className="p-3.5 rounded-2xl bg-white border border-slate-200 space-y-3 text-left"
             >
               <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
                 <KeyRound className="w-4 h-4 text-emerald-700" />
-                <span>নতুন অ্যাডমিন পাসওয়ার্ড</span>
+                <span>{isRemoteEnabled ? 'এই ব্রাউজারের অ্যাডমিন পাসওয়ার্ড' : 'নতুন অ্যাডমিন পাসওয়ার্ড'}</span>
               </div>
+              {isRemoteEnabled && (
+                <p className="text-[11px] leading-relaxed text-slate-500">
+                  সার্ভারের টোকেন এখান থেকে বদলানো যায় না — সেটি দরকার হলে Supabase-এ{' '}
+                  <code className="bg-slate-100 px-1 rounded">ADMIN_TOKEN</code> বদলান। নিচেরটি দিয়ে
+                  শুধু এই ব্রাউজারেই ঢোকার পাসওয়ার্ড সেট/বদলানো হয়।
+                </p>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label htmlFor="admin-new-pass" className="text-xs font-bold text-slate-700 block mb-1">
