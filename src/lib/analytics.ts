@@ -88,19 +88,39 @@ export async function fetchAdminStats(token: string): Promise<AdminStats> {
   if (!isRemoteAnalyticsEnabled || !SUPABASE_URL) {
     throw new Error('রেমোট পরিসংখ্যান এখনো চালু নয়।');
   }
-  const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-stats`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-admin-token': token,
-      ...(SUPABASE_ANON_KEY
-        ? { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` }
-        : {}),
-    },
-    body: JSON.stringify({}),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${SUPABASE_URL}/functions/v1/admin-stats`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-token': token,
+        ...(SUPABASE_ANON_KEY
+          ? { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` }
+          : {}),
+      },
+      body: JSON.stringify({}),
+    });
+  } catch {
+    // A network/CORS failure says nothing about the token, so never let the
+    // browser's bare "Failed to fetch" through as if the password were wrong.
+    throw new Error(
+      'সার্ভারের সাথে সংযোগ হয়নি — VITE_SUPABASE_URL ঠিক আছে কি না এবং admin-stats ফাংশন ডিপ্লয় করা আছে কি না দেখুন।',
+    );
+  }
   if (res.status === 401 || res.status === 403) throw new Error('ভুল অ্যাডমিন টোকেন।');
-  if (!res.ok) throw new Error('পরিসংখ্যান আনা যায়নি।');
+  if (res.status === 404) {
+    throw new Error('admin-stats ফাংশন পাওয়া যায়নি — supabase functions deploy admin-stats করুন।');
+  }
+  if (!res.ok) {
+    let detail = '';
+    try {
+      detail = ((await res.json()) as { error?: string }).error ?? '';
+    } catch {
+      detail = '';
+    }
+    throw new Error(detail || `পরিসংখ্যান আনা যায়নি (HTTP ${res.status})।`);
+  }
   return (await res.json()) as AdminStats;
 }
 
