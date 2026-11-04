@@ -15,6 +15,9 @@ import {
   Cpu,
   LogIn,
   LogOut,
+  Eye,
+  EyeOff,
+  KeyRound,
 } from 'lucide-react';
 import { ALL_TEMPLATES } from '../data/templates';
 import { getSavedApplications, analyticsResetLocal, type LocalStatsSnapshot } from '../utils/storage';
@@ -51,6 +54,7 @@ function readStoredPassphrase(): string | null {
 export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, localStats, isRemoteEnabled }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState('');
   const [needsSetup, setNeedsSetup] = useState(false);
   const [storageKb, setStorageKb] = useState(0);
@@ -59,6 +63,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, localSt
   const [remoteStats, setRemoteStats] = useState<AdminStats | null>(null);
   const [remoteError, setRemoteError] = useState('');
   const [remoteLoading, setRemoteLoading] = useState(false);
+  const [isChangingPass, setIsChangingPass] = useState(false);
+  const [newPassInput, setNewPassInput] = useState('');
+  const [confirmPassInput, setConfirmPassInput] = useState('');
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [passChangeMsg, setPassChangeMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   const loadLocalSnapshot = useCallback(() => {
     const saved = getSavedApplications();
@@ -152,8 +161,37 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, localSt
   const handleLogout = () => {
     setIsAuthenticated(false);
     setPasswordInput('');
+    setShowPassword(false);
+    setIsChangingPass(false);
+    setNewPassInput('');
+    setConfirmPassInput('');
+    setPassChangeMsg(null);
     setRemoteStats(null);
     sessionStorage.removeItem('admin_session_token');
+  };
+
+  const handleChangePassphrase = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isRemoteEnabled) return;
+    const next = newPassInput.trim();
+    if (next.length < 6) {
+      setPassChangeMsg({ ok: false, text: 'নতুন পাসওয়ার্ড অন্তত ৬ অক্ষরের হতে হবে।' });
+      return;
+    }
+    if (next !== confirmPassInput.trim()) {
+      setPassChangeMsg({ ok: false, text: 'দুটি নতুন পাসওয়ার্ড মিলছে না।' });
+      return;
+    }
+    try {
+      localStorage.setItem(PASSPHRASE_KEY, await sha256(next));
+    } catch {
+      setPassChangeMsg({ ok: false, text: 'ব্রাউজারে পাসওয়ার্ড সংরক্ষণ করা যায়নি (প্রাইভেট মোড?)।' });
+      return;
+    }
+    setNewPassInput('');
+    setConfirmPassInput('');
+    setShowNewPass(false);
+    setPassChangeMsg({ ok: true, text: 'পাসওয়ার্ড পরিবর্তন হয়েছে। পরেরবার নতুন পাসওয়ার্ডটিই ব্যবহার করুন।' });
   };
 
   const handleExportData = () => {
@@ -232,16 +270,28 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, localSt
               <label htmlFor="admin-pass" className="text-xs font-bold text-slate-700 block mb-1">
                 {isRemoteEnabled ? 'অ্যাডমিন টোকেন' : 'অ্যাডমিন পাসওয়ার্ড'}
               </label>
-              <input
-                id="admin-pass"
-                type="password"
-                value={passwordInput}
-                onChange={(e) => setPasswordInput(e.target.value)}
-                placeholder="••••••••"
-                autoComplete={needsSetup ? 'new-password' : 'current-password'}
-                required
-                className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs text-slate-800 focus:ring-2 focus:ring-emerald-600 focus:outline-hidden"
-              />
+              <div className="relative">
+                <input
+                  id="admin-pass"
+                  type={showPassword ? 'text' : 'password'}
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  placeholder="••••••••"
+                  autoComplete={needsSetup ? 'new-password' : 'current-password'}
+                  required
+                  className="w-full pl-3 pr-10 py-2 rounded-xl border border-slate-300 text-xs text-slate-800 focus:ring-2 focus:ring-emerald-600 focus:outline-hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? 'পাসওয়ার্ড লুকান' : 'পাসওয়ার্ড দেখান'}
+                  aria-pressed={showPassword}
+                  title={showPassword ? 'পাসওয়ার্ড লুকান' : 'পাসওয়ার্ড দেখান'}
+                  className="absolute inset-y-0 right-0 px-3 flex items-center text-slate-500 hover:text-emerald-700 transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             {loginError && (
@@ -366,6 +416,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, localSt
                   <span>সার্ভার থেকে আনুন</span>
                 </button>
               )}
+              {!isRemoteEnabled && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsChangingPass((v) => !v);
+                    setPassChangeMsg(null);
+                    setNewPassInput('');
+                    setConfirmPassInput('');
+                  }}
+                  className="flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors"
+                >
+                  <KeyRound className="w-3.5 h-3.5" />
+                  <span>পাসওয়ার্ড পরিবর্তন</span>
+                </button>
+              )}
               <button
                 onClick={handleLogout}
                 className="flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors"
@@ -375,6 +440,80 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, localSt
               </button>
             </div>
           </div>
+
+          {!isRemoteEnabled && isChangingPass && (
+            <form
+              onSubmit={handleChangePassphrase}
+              className="p-3.5 rounded-2xl bg-white border border-slate-200 space-y-3 text-left"
+            >
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                <KeyRound className="w-4 h-4 text-emerald-700" />
+                <span>নতুন অ্যাডমিন পাসওয়ার্ড</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="admin-new-pass" className="text-xs font-bold text-slate-700 block mb-1">
+                    নতুন পাসওয়ার্ড
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="admin-new-pass"
+                      type={showNewPass ? 'text' : 'password'}
+                      value={newPassInput}
+                      onChange={(e) => setNewPassInput(e.target.value)}
+                      placeholder="••••••••"
+                      autoComplete="new-password"
+                      className="w-full pl-3 pr-10 py-2 rounded-xl border border-slate-300 text-xs text-slate-800 focus:ring-2 focus:ring-emerald-600 focus:outline-hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPass((v) => !v)}
+                      aria-label={showNewPass ? 'পাসওয়ার্ড লুকান' : 'পাসওয়ার্ড দেখান'}
+                      aria-pressed={showNewPass}
+                      title={showNewPass ? 'পাসওয়ার্ড লুকান' : 'পাসওয়ার্ড দেখান'}
+                      className="absolute inset-y-0 right-0 px-3 flex items-center text-slate-500 hover:text-emerald-700 transition-colors"
+                    >
+                      {showNewPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="admin-new-pass-confirm" className="text-xs font-bold text-slate-700 block mb-1">
+                    আবার লিখুন
+                  </label>
+                  <input
+                    id="admin-new-pass-confirm"
+                    type={showNewPass ? 'text' : 'password'}
+                    value={confirmPassInput}
+                    onChange={(e) => setConfirmPassInput(e.target.value)}
+                    placeholder="••••••••"
+                    autoComplete="new-password"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs text-slate-800 focus:ring-2 focus:ring-emerald-600 focus:outline-hidden"
+                  />
+                </div>
+              </div>
+              {passChangeMsg && (
+                <p
+                  className={`text-[11px] font-medium flex items-center gap-1.5 ${
+                    passChangeMsg.ok ? 'text-emerald-700' : 'text-rose-700'
+                  }`}
+                >
+                  {passChangeMsg.ok ? (
+                    <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+                  ) : (
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                  )}
+                  <span>{passChangeMsg.text}</span>
+                </p>
+              )}
+              <button
+                type="submit"
+                className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-md transition-colors"
+              >
+                পাসওয়ার্ড সংরক্ষণ করুন
+              </button>
+            </form>
+          )}
 
           {remoteError && (
             <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-1.5">

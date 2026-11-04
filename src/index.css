@@ -1,9 +1,29 @@
 @import "tailwindcss";
 
-@layer base {
-  body {
-    font-family: 'Noto Sans Bengali', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  }
+/* Unlayered on purpose: Tailwind's own preflight lives in @layer base and sets
+   `font: inherit; color: inherit` on form controls. A rule inside our own
+   @layer base is appended to that same layer and loses to anything later, so
+   these must sit outside every layer to actually apply. */
+body {
+  font-family: 'Noto Sans Bengali', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Form controls do not inherit the page font by default: they keep the
+   browser's system UI font, which on Windows has no Bengali glyphs. Every
+   input would then render each typed letter as an invisible missing-glyph
+   box (the field looks empty while the value is there). Give every text field
+   the page font and an explicit text colour. */
+input,
+select,
+textarea {
+  font-family: inherit;
+  color: #0f172a;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #94a3b8;
+  opacity: 1;
 }
 
 .font-serif-bn {
