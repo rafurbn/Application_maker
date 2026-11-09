@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { SubCategoryType, FormatTemplate, DashboardTheme, SavedApplication } from '../types';
 import { ALL_TEMPLATES } from '../data/templates';
 import { DesignationSelector } from './DesignationSelector';
@@ -328,12 +328,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </span>
           </div>
 
-          {/* Headline */}
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white leading-tight">
-            মাত্র কয়েকটি ইনপুটে প্রস্তুত করুন নিখুঁত <br />
-            <span className="text-emerald-300">অফিসিয়াল বাংলা দরখাস্ত</span>
+          {/* Headline: question + app purpose + call to action */}
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white leading-snug">
+            আপনি কি প্রাথমিক বিদ্যালয়ের একজন শিক্ষক?
+            <br />
+            আপনি কি স্কুল-কলেজে অধ্যয়নরত কোনো শিক্ষার্থী?
           </h1>
-
+          <p className="text-base sm:text-lg font-extrabold text-amber-300">
+            ★ এই এ্যাপটি আপনার জন্য ★
+          </p>
+          <p className="text-sm sm:text-base text-emerald-200/95 leading-relaxed font-semibold">
+            মাত্র কয়েকটি ডাটা ইনপুটের মাধ্যমে আপনার প্রয়োজনীয় <span className="text-emerald-300">আবেদনপত্রটি</span> খুব সহজে প্রস্তুত করে নিন।
+          </p>
           {/* Subtitle */}
           <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed font-normal">
             সরকারি প্রাথমিক বিদ্যালয়ের সহকারী ও প্রধান শিক্ষকের জন্য ৮টি বিশেষ সরকারি ফরম্যাট এবং স্কুল-কলেজের শিক্ষার্থীদের জন্য ৭টি প্রাতিষ্ঠানিক ফরম্যাট। সরাসরি প্রিন্ট ও PDF ডাউনলোড করুন।
