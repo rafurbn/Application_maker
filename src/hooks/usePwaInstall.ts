@@ -5,27 +5,72 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
 }
 
+/** যে ডিভাইসে ইনস্টল-গাইড দেখাতে হবে — প্রতিটির ধাপ আলাদা। */
+export type InstallGuideKind = 'ios' | 'android' | 'desktop';
+
+type NavigatorWithStandalone = Navigator & { standalone?: boolean };
+
+function detectGuideDevice(): { kind: InstallGuideKind; browser: string; label: string; canAutoInstall: boolean } {
+  const ua = window.navigator.userAgent;
+  const lower = ua.toLowerCase();
+  const isIos = /iphone|ipad|ipod/.test(lower) || (/macintosh/.test(lower) && (window.navigator as Navigator & { maxTouchPoints?: number }).maxTouchPoints! > 1);
+  const isAndroid = /android/.test(lower);
+  // Android ও ডেস্কটপে Chrome/Edge-এ beforeinstallprompt আসে; Firefox/Opera-তে আসে না।
+  const isSamsung = /samsungbrowser/.test(lower);
+  const isFirefox = /firefox|fxios/.test(lower);
+  const isOpera = /opr\//.test(lower);
+
+  if (isIos) {
+    return {
+      kind: 'ios',
+      browser: 'Safari',
+      label: 'iPhone / iPad',
+      canAutoInstall: false,
+    };
+  }
+  if (isAndroid) {
+    if (isSamsung) {
+      return { kind: 'android', browser: 'Samsung Internet', label: 'Samsung Galaxy ফোন', canAutoInstall: true };
+    }
+    if (isFirefox) {
+      return { kind: 'android', browser: 'Firefox', label: 'Android ফোন', canAutoInstall: false };
+    }
+    return { kind: 'android', browser: isOpera ? 'Opera' : 'Chrome', label: 'Android ফোন', canAutoInstall: true };
+  }
+  return { kind: 'desktop', browser: 'Chrome / Edge', label: 'কম্পিউটার (Windows / Mac)', canAutoInstall: true };
+}
+
 export function usePwaInstall() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstallable, setIsInstallable] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
-  const [isIos, setIsIos] = useState(false);
-  const [showIosPrompt, setShowIosPrompt] = useState(false);
+  const [guideKind, setGuideKind] = useState<InstallGuideKind>('desktop');
+  const [inAppBrowser, setInAppBrowser] = useState(false);
+  const [showInstallGuide, setShowInstallGuide] = useState(false);
 
   useEffect(() => {
-    // Check if running in standalone mode (already installed)
+    // ইতিমধ্যে ইনস্টল করা অ্যাপ থেকে খোলা হলে (iOS-এ navigator.standalone)
     const isStandalone =
       window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as any).standalone === true;
+      window.matchMedia('(display-mode: fullscreen)').matches ||
+      window.matchMedia('(display-mode: minimal-ui)').matches ||
+      (window.navigator as NavigatorWithStandalone).standalone === true;
     if (isStandalone) {
       setIsInstalled(true);
       return;
     }
 
-    // Detect iOS
-    const userAgent = window.navigator.userAgent.toLowerCase();
-    const isIosDevice = /iphone|ipad|ipod/.test(userAgent);
-    setIsIos(isIosDevice);
+    const device = detectGuideDevice();
+    setGuideKind(device.kind);
+
+    // in-app ব্রাউজার (Facebook/WhatsApp/Messenger ভেতরের ওয়েবভিউ) থেকে খুললে
+    // ইনস্টল বাটন বা "Home screen"-এ যোগ করার অপশন কোনোদিনই আসে না।
+    // তাই সত্যিকারের ব্রাউজারে খোলার পরামর্শ দেখানো হবে।
+    const insideAppBrowser =
+      /fban|fbav|fb_iab|instagram|line\/|whatsapp|micromessenger|twitter|snapchat|wv\)/.test(
+        window.navigator.userAgent.toLowerCase(),
+      );
+    if (insideAppBrowser && device.kind !== 'desktop') setInAppBrowser(true);
 
     const handleBeforeInstall = (e: Event) => {
       e.preventDefault();
@@ -33,10 +78,12 @@ export function usePwaInstall() {
       setIsInstallable(true);
     };
 
+    // Android Chrome কিছু ক্ষেত্রে পেজটা আগে থেকেই খোলা থাকলেও পরে এই ইভেন্ট দেয়
     const handleAppInstalled = () => {
       setIsInstalled(true);
       setIsInstallable(false);
       setDeferredPrompt(null);
+      setShowInstallGuide(false);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
@@ -48,6 +95,12 @@ export function usePwaInstall() {
     };
   }, []);
 
+  /**
+   * ইনস্টল চাপলে:
+   * 1. Chrome/Edge/Samsung-এ স্বাভাবিক ইনস্টল পপআপ খোলে।
+   * 2. পপআপ না এলে (পুরোনো OPPO A5s, Firefox, in-app ব্রাউজার) —
+   *    ওই ডিভাইসের জন্য ধাপে ধাপে লেখা গাইড খোলে, যাতে বাটন কখনো "কিছুই করে না" না হয়।
+   */
   const installApp = async (): Promise<boolean> => {
     if (deferredPrompt) {
       try {
@@ -62,19 +115,18 @@ export function usePwaInstall() {
       } catch (err) {
         console.error('Install prompt error:', err);
       }
-    } else if (isIos) {
-      setShowIosPrompt(true);
-      return false;
     }
+    setShowInstallGuide(true);
     return false;
   };
 
   return {
     isInstallable,
     isInstalled,
-    isIos,
-    showIosPrompt,
-    setShowIosPrompt,
+    guideKind,
+    inAppBrowser,
+    showInstallGuide,
+    setShowInstallGuide,
     installApp,
   };
 }

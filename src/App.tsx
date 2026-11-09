@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { SubCategoryType, ApplicationFormData, SavedApplication, DashboardTheme } from './types';
 import { ALL_TEMPLATES, getDefaultFormData, getSampleFormData } from './data/templates';
 import {
@@ -25,10 +25,11 @@ import { SavedApplicationsModal } from './components/SavedApplicationsModal';
 import { SavedApplicationsPanel } from './components/SavedApplicationsPanel';
 import { AdminPanel } from './components/AdminPanel';
 import { Modal } from './components/Modal';
+import { InstallGuideModal } from './components/InstallGuideModal';
 import { TextImportPanel } from './components/TextImportPanel';
 import { AdSlot } from './components/AdSlot';
 import { ToastContainer, ToastMessage } from './components/Toast';
-import { ArrowLeft, Share, PlusSquare, Smartphone, Download, Upload, Trash2, ShieldCheck, Phone } from 'lucide-react';
+import { ArrowLeft, Download, Upload, Trash2, ShieldCheck, Phone } from 'lucide-react';
 
 const SAVED_APPLICATIONS_SOFT_LIMIT = 50;
 
@@ -51,7 +52,7 @@ export default function App() {
   const [activeNav, setActiveNav] = useState<AppNav>('dashboard');
 
   const { stats, isRemoteEnabled, trackApplicationGeneration } = useAnonymousIdentity();
-  const { isInstallable, isInstalled, showIosPrompt, setShowIosPrompt, installApp } = usePwaInstall();
+  const { isInstallable, isInstalled, guideKind, inAppBrowser, showInstallGuide, setShowInstallGuide, installApp } = usePwaInstall();
   const remoteAnalytics = analyticsStatus();
 
   useEffect(() => {
@@ -100,13 +101,16 @@ export default function App() {
   const handleInstallApp = async () => {
     const installed = await installApp();
     if (installed) {
-      showToast('ইনস্টল অনুরোধ গ্রহণ হয়েছে। আইকন হোম স্ক্রিনে না দেখা দিলে অ্যাপ ড্রয়ারে খুঁজুন, কিংবা ফোনের সেটিংসে Chrome-কে "হোম স্ক্রিন শর্টকাট তৈরি"-এর অনুমতি দিন।', 'success');
-      return;
+      showToast(
+        'ইনস্টল অনুরোধ গ্রহণ হয়েছে। আইকন হোম স্ক্রিনে না মিললে অ্যাপ ড্রয়ারে "দরখাস্ত" নামে খুঁজুন।',
+        'success',
+      );
     }
-    showToast(
-      'এই ফোনটি থেকে স্বয়ংক্রিয় ইনস্টল-অপশন এখনো আসেনি — Chrome মেনু (⋮) থেকে "Install app" (পুরোনো ভার্সনে "হোম স্ক্রিনে যোগ করুন") চাপুন, মেনু দিয়ে ইনস্টল সবসময়ই যায়।',
-      'info',
-    );
+  };
+
+  /** গাইডের ভেতরের বাটন: ব্রাউজার পপআপ দিয়ে আবার চেষ্টা, না হলে গাইড খোলাই থাকে। */
+  const handleRetryInstall = async () => {
+    await installApp();
   };
 
   const openTemplate = (templateId: SubCategoryType, useSample: boolean) => {
@@ -492,43 +496,15 @@ export default function App() {
         </div>
       </footer>
 
-      {/* iOS / ম্যানুয়াল ইনস্টল নির্দেশিকা */}
-      <Modal
-        isOpen={showIosPrompt}
-        onClose={() => setShowIosPrompt(false)}
-        title="আইফোনে অ্যাপ ইনস্টল নির্দেশিকা"
-        subtitle="Safari ব্রাউজারে নিচের ধাপগুলো অনুসরণ করুন"
-        icon={<Smartphone className="w-4 h-4" />}
-        maxWidth="max-w-sm"
-      >
-        <ol className="space-y-2.5 text-left text-xs">
-          <li className="flex items-start gap-2.5">
-            <span className="w-5 h-5 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold text-[11px] shrink-0 mt-0.5">
-              ১
-            </span>
-            <p>
-              Safari-র নিচে <Share className="w-3.5 h-3.5 inline mx-0.5 text-blue-600" /> <b>Share</b> বোতামে ট্যাপ করুন।
-            </p>
-          </li>
-          <li className="flex items-start gap-2.5">
-            <span className="w-5 h-5 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold text-[11px] shrink-0 mt-0.5">
-              ২
-            </span>
-            <p>
-              নিচে স্ক্রোল করে <PlusSquare className="w-3.5 h-3.5 inline mx-0.5 text-slate-700" />{' '}
-              <b>Add to Home Screen</b> বেছে নিন।
-            </p>
-          </li>
-          <li className="flex items-start gap-2.5">
-            <span className="w-5 h-5 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold text-[11px] shrink-0 mt-0.5">
-              ৩
-            </span>
-            <p>
-              উপরে ডানপাশে <b>Add</b> চাপুন — হোম স্ক্রিনে অ্যাপের আইকন যোগ হবে।
-            </p>
-          </li>
-        </ol>
-      </Modal>
+      {/* Android / iPhone / পিসি — ডিভাইস অনুযায়ী ইনস্টল গাইড */}
+      <InstallGuideModal
+        isOpen={showInstallGuide}
+        onClose={() => setShowInstallGuide(false)}
+        kind={guideKind}
+        inAppBrowser={inAppBrowser}
+        isInstallable={isInstallable}
+        onRetryInstall={handleRetryInstall}
+      />
 
       {/* পুরোনো আবেদনের লেখা পেস্ট */}
       <Modal
