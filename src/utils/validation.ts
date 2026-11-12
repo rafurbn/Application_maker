@@ -9,7 +9,6 @@ export function showsLeaveDateRange(template: FormatTemplate): boolean {
     'prl_pension',
     'ex_bangladesh',
     'earned_leave',
-    'education_allowance',
     'student_absence_leave',
     'student_advance_leave',
   ];

@@ -1,6 +1,6 @@
 import React from 'react';
 import { FormatTemplate, ApplicationFormData } from '../types';
-import { calculateBanglaDuration } from '../utils/banglaUtils';
+import { calculateBanglaDuration, toBanglaNumber } from '../utils/banglaUtils';
 import { showsLeaveDateRange } from '../utils/validation';
 import { DateField } from './DateField';
 import { Building2, Calendar, RotateCcw, User, Wand2 } from 'lucide-react';
@@ -438,7 +438,16 @@ export const ApplicationForm: React.FC<ApplicationFormProps> = ({
                 <input
                   type="text"
                   value={readFieldValue(formData, field.key)}
-                  onChange={(e) => onChange({ [field.key]: e.target.value })}
+                  onChange={(e) =>
+                    onChange({
+                      // A birth-certificate number is read out in Bangla, so the digits
+                      // are converted as they are typed and Latin letters never land.
+                      [field.key]: field.banglaDigits
+                        ? toBanglaNumber(e.target.value.replace(/[^0-9০-৯\s]/g, ''))
+                        : e.target.value,
+                    })
+                  }
+                  inputMode={field.banglaDigits ? 'numeric' : undefined}
                   placeholder={field.placeholder}
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm text-slate-800 focus:ring-2 focus:ring-emerald-600 focus:outline-hidden"
                 />
@@ -451,7 +460,7 @@ export const ApplicationForm: React.FC<ApplicationFormProps> = ({
           ))}
 
           {/* Subject Field (User can customize if desired) */}
-          {template.id !== 'joining_letter' && (
+          {template.id !== 'joining_letter' && !template.subjectFromField && (
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 আবেদনপত্রের বিষয় (Subject)

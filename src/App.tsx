@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect, useRef } from 'react';
 import { SubCategoryType, ApplicationFormData, SavedApplication, DashboardTheme } from './types';
-import { ALL_TEMPLATES, getDefaultFormData, getSampleFormData } from './data/templates';
+import { ALL_TEMPLATES, getDefaultFormData, getSampleFormData, deriveSubject } from './data/templates';
 import {
   getSavedApplications,
   saveApplicationLocally,
@@ -120,6 +120,7 @@ export default function App() {
       ? getSampleFormData(template)
       : applyRememberedFields(getDefaultFormData(template));
     if (globalDesignation) initial.designation = globalDesignation;
+    initial.subject = deriveSubject(template, initial);
     setSelectedTemplateId(templateId);
     setFormData(initial);
     setActiveMobileTab(useSample ? 'preview' : 'form');
@@ -141,7 +142,13 @@ export default function App() {
   const currentTemplate = ALL_TEMPLATES.find((t) => t.id === selectedTemplateId);
 
   const handleFormChange = (updatedFields: Partial<ApplicationFormData>) => {
-    setFormData((prev) => (prev ? { ...prev, ...updatedFields } : null));
+    setFormData((prev) => {
+      if (!prev) return null;
+      const next = { ...prev, ...updatedFields };
+      // A derived subject follows its source field, so it is never typed twice.
+      if (currentTemplate?.subjectFromField) next.subject = deriveSubject(currentTemplate, next);
+      return next;
+    });
     rememberFields(updatedFields);
   };
 
@@ -163,8 +170,10 @@ export default function App() {
       if (template) {
         const initial = applyRememberedFields(getDefaultFormData(template));
         if (globalDesignation) initial.designation = globalDesignation;
+        const next = { ...initial, ...fields };
+        next.subject = deriveSubject(template, next);
         setSelectedTemplateId(template.id);
-        setFormData({ ...initial, ...fields });
+        setFormData(next);
       }
     } else {
       handleFormChange(fields);

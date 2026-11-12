@@ -341,12 +341,15 @@ export const ALL_TEMPLATES: FormatTemplate[] = [
     title: '৯. প্রথম/দ্বিতীয় সন্তানের শিক্ষা ভাতা প্রাপ্তির আবেদন',
     shortTitle: 'শিক্ষা ভাতা',
     category: 'employee',
-    description: 'সন্তানের লেখাপড়ার জন্য সরকারি বিধি অনুযায়ী প্রথম বা দ্বিতীয় সন্তানের শিক্ষা ভাতা মঞ্জুর ও ই-পেমেন্টের আবেদনপত্র।',
+    description: 'সন্তানের লেখাপড়ার জন্য সরকারি বিধি অনুযায়ী প্রথম বা দ্বিতীয় সন্তানের শিক্ষা ভাতা মঞ্জুরপ্রাপ্তির আবেদনপত্র।',
     badge: 'চাকরিজীবী',
     iconName: 'Coins',
     defaultRecipient: 'প্রধান শিক্ষক',
     defaultThrough: 'যথাযথ কর্তৃপক্ষ',
     defaultSubject: 'প্রথম/দ্বিতীয় সন্তানের শিক্ষা ভাতা প্রাপ্তির জন্য আবেদন।',
+    // বিষয়টি “সন্তানের ক্রম” থেকেই নিজে থেকে তৈরি হয় — হাতে লেখার প্রয়োজন নেই।
+    subjectFromField: 'childSerial',
+    subjectTemplate: '{সন্তানের ক্রম} সন্তানের শিক্ষা ভাতা প্রাপ্তির জন্য আবেদন।',
     recipientOptions: TEACHER_RECIPIENTS,
     designationOptions: TEACHER_DESIGNATIONS,
     throughOptions: TEACHER_THROUGH_OPTIONS,
@@ -387,12 +390,8 @@ export const ALL_TEMPLATES: FormatTemplate[] = [
         label: 'জন্মনিবন্ধন সনদের নম্বর',
         type: 'text',
         placeholder: 'যেমন: ১৯৯৬ ৩১২০ ০০০০ ০১২৩৪',
-      },
-      {
-        key: 'allowanceBankInfo',
-        label: 'বেতন হিসাবের ব্যাংক ও হিসাব নম্বর',
-        type: 'text',
-        placeholder: 'যেমন: সোনালী ব্যাংক, হিসাব নং: ০১২৩৪৫৬৭৮৯০১২',
+        // নম্বরটি সর্বদা বাংলা অঙ্কে বসবে — আটকে রাখা হয় শুধু অঙ্ক ও ফাঁকা জায়গা।
+        banglaDigits: true,
       },
       {
         key: 'attachments',
@@ -551,6 +550,18 @@ export const ALL_TEMPLATES: FormatTemplate[] = [
 ];
 
 /**
+ * Templates whose subject is written from one of their own fields (e.g. the child
+ * serial) keep the subject in step with that field, so the writer never types it.
+ */
+export function deriveSubject(template: FormatTemplate, data: ApplicationFormData): string {
+  if (!template.subjectFromField || !template.subjectTemplate) return data.subject;
+  const value = (data as unknown as Record<string, unknown>)[template.subjectFromField];
+  const text = typeof value === 'string' ? value.trim() : '';
+  if (!text) return template.defaultSubject;
+  return template.subjectTemplate.replace(/\{[^}]+\}/, text);
+}
+
+/**
  * A ready-to-read demo application: every template field carries its own official
  * wording, with sample data derived from government primary schools and students.
  */
@@ -595,7 +606,6 @@ export function getSampleFormData(template: FormatTemplate): ApplicationFormData
     childClass: '৬ষ্ঠ শ্রেণি, বিয়ানীবাজার সরকারি উচ্চ বিদ্যালয়',
     childDateOfBirth: '১০ মার্চ ২০১৪',
     childBirthCertificateNo: '১৯৯৬ ৩১২০ ০০০০ ০১২৩৪',
-    allowanceBankInfo: 'সোনালী ব্যাংক, হিসাব নং: ০১২৩৪৫৬৭৮৯০১২',
   };
 
   for (const field of template.fields) {
@@ -656,7 +666,6 @@ export function getDefaultFormData(template: FormatTemplate): ApplicationFormDat
     childClass: '',
     childDateOfBirth: '',
     childBirthCertificateNo: '',
-    allowanceBankInfo: '',
 
     studentClass: '',
     rollNumber: '',

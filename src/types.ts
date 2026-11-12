@@ -26,6 +26,8 @@ export interface FieldDefinition {
   defaultValue?: string;
   helperText?: string;
   required?: boolean;
+  /** Typing rules for the input; `banglaDigits` accepts digits and spaces only and stores them in Bangla. */
+  banglaDigits?: boolean;
 }
 
 export interface FormatTemplate {
@@ -39,6 +41,12 @@ export interface FormatTemplate {
   defaultRecipient: string;
   defaultThrough?: string;
   defaultSubject: string;
+  /**
+   * Subject is written from another field instead of a free-text box:
+   * `subjectTemplate` carries a `{label}` slot filled from `subjectFromField`.
+   */
+  subjectFromField?: string;
+  subjectTemplate?: string;
   recipientOptions?: string[];
   designationOptions?: string[];
   throughOptions?: string[];
