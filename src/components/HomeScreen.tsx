@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Plane,
   Award,
+  Coins,
   GraduationCap,
   CalendarCheck,
   BookOpen,
@@ -38,7 +39,7 @@ import {
   Bookmark
 } from 'lucide-react';
 
-// Icon mapping matching the 15 templates with domain-specific coloring
+// Icon mapping matching the 16 templates with domain-specific coloring
 const ICON_MAP: Record<string, { icon: React.ReactNode; bg: string; border: string }> = {
   CalendarDays: {
     icon: <CalendarDays className="w-5 h-5 text-emerald-600" />,
@@ -79,6 +80,11 @@ const ICON_MAP: Record<string, { icon: React.ReactNode; bg: string; border: stri
     icon: <Award className="w-5 h-5 text-purple-600" />,
     bg: 'bg-purple-50',
     border: 'border-purple-200'
+  },
+  Coins: {
+    icon: <Coins className="w-5 h-5 text-orange-600" />,
+    bg: 'bg-orange-50',
+    border: 'border-orange-200'
   },
   GraduationCap: {
     icon: <GraduationCap className="w-5 h-5 text-emerald-600" />,
@@ -127,6 +133,7 @@ const TEMPLATE_CARD_TAGS: Record<string, string> = {
   passport_noc: 'পাসপোর্ট অনাপত্তি (NOC)',
   ex_bangladesh: 'বহিঃবাংলাদেশ ছুটি',
   earned_leave: 'অর্জিত / বৈবাহিক ছুটি',
+  education_allowance: 'শিক্ষা ভাতা',
   student_absence_leave: 'অনুপস্থিতি ছুটি',
   student_advance_leave: 'অগ্রিম ছুটি',
   student_fee_waiver: 'বিনা বেতনে অধ্যয়ন',
@@ -146,6 +153,7 @@ const TEMPLATE_ENGLISH_TITLES: Record<string, string> = {
   passport_noc: 'Passport NOC',
   ex_bangladesh: 'Ex-Bangladesh Leave',
   earned_leave: 'Earned / Marriage Leave',
+  education_allowance: 'Education Allowance (1st / 2nd Child)',
   student_absence_leave: 'Leave of Absence',
   student_advance_leave: 'Advance Leave',
   student_fee_waiver: 'Fee Waiver / Free Studentship',
@@ -342,7 +350,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </p>
           {/* Subtitle */}
           <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed font-normal">
-            সরকারি প্রাথমিক বিদ্যালয়ের সহকারী ও প্রধান শিক্ষকের জন্য ৮টি বিশেষ সরকারি ফরম্যাট এবং স্কুল-কলেজের শিক্ষার্থীদের জন্য ৭টি প্রাতিষ্ঠানিক ফরম্যাট। সরাসরি প্রিন্ট ও PDF ডাউনলোড করুন।
+            সরকারি প্রাথমিক বিদ্যালয়ের সহকারী ও প্রধান শিক্ষকের জন্য ৯টি বিশেষ সরকারি ফরম্যাট এবং স্কুল-কলেজের শিক্ষার্থীদের জন্য ৭টি প্রাতিষ্ঠানিক ফরম্যাট। সরাসরি প্রিন্ট ও PDF ডাউনলোড করুন।
           </p>
 
           {/* Bullet Features */}
@@ -555,7 +563,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
       </div>
 
-      {/* 5. Part 1: চাকরিজীবী (প্রাথমিক বিদ্যালয় স্পেশাল) Grid (8 Cards) */}
+      {/* 5. Part 1: চাকরিজীবী (প্রাথমিক বিদ্যালয় স্পেশাল) Grid (9 Cards) */}
       {(activeTab === 'all' || activeTab === 'employee') && filteredEmployee.length > 0 && (
         <section className="space-y-3.5">
           {/* Section Header */}
@@ -570,7 +578,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                     পার্ট ১: চাকরিজীবী (প্রাথমিক বিদ্যালয় স্পেশাল)
                   </h2>
                   <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300">
-                    ৮টি সরকারি
+                    ৯টি সরকারি
                   </span>
                 </div>
                 <p className="text-xs text-slate-500">

@@ -204,6 +204,19 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         };
       }
 
+      case 'education_allowance': {
+        const serial = getVal(formData.childSerial, 'প্রথম');
+        const child = getVal(formData.childName, '[সন্তানের নাম]');
+        const childClass = getVal(formData.childClass, '[শ্রেণি ও প্রতিষ্ঠানের নাম]');
+        const dob = formData.childDateOfBirth ? toBanglaDate(formData.childDateOfBirth) : '[জন্ম তারিখ]';
+        const birthCert = getVal(formData.childBirthCertificateNo, '[জন্মনিবন্ধন সনদের নম্বর]');
+        const bankInfo = getVal(formData.allowanceBankInfo, '[ব্যাংকের নাম ও হিসাব নম্বর]');
+        return {
+          mainBody: `সবিনয় নিবেদন এই যে, আমি নিম্নস্বাক্ষরকারী ${cleanWorkplace}, ${cleanUpazila}, ${cleanDistrict} এর ${desig}। সরকারি বিধি মোতাবেক আমার ${serial} সন্তান ${child} (জন্ম তারিখ: ${dob}, জন্মনিবন্ধন সনদ নং: ${birthCert}) বর্তমানে ${childClass}-এ অধ্যয়নরত আছে। উক্ত সন্তানের লেখাপড়ার ব্যয় নির্বাহের জন্য সরকারি বিধি অনুযায়ী শিক্ষা ভাতা প্রাপ্তির জন্য আমি আবেদন করছি। ভাতার অর্থ আমার বেতন হিসাবের মাধ্যমে গ্রহণ করতে ইচ্ছুক, যার বিবরণ: ${bankInfo}।`,
+          prayerText: `অতএব, মহোদয় সমীপে বিনীত প্রার্থনা, আমার ${serial} সন্তানের জন্য সরকারি বিধি অনুযায়ী শিক্ষা ভাতা মঞ্জুরপূর্বক নির্ধারিত হিসাবে নিয়মিত ই-পেমেন্টের সদয় ব্যবস্থা গ্রহণে আপনার মর্জি হয়।`,
+        };
+      }
+
       // Student Templates
       case 'student_absence_leave': {
         const reason = getVal(formData.leaveReason, 'হঠাৎ তীব্র জ্বরে আক্রান্ত হওয়ার কারণে');

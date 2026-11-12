@@ -7,6 +7,7 @@ export type SubCategoryType =
   | 'passport_noc'
   | 'ex_bangladesh'
   | 'earned_leave'
+  | 'education_allowance'
   | 'student_absence_leave'
   | 'student_advance_leave'
   | 'student_fee_waiver'

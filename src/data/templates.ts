@@ -336,6 +336,72 @@ export const ALL_TEMPLATES: FormatTemplate[] = [
       },
     ],
   },
+  {
+    id: 'education_allowance',
+    title: '৯. প্রথম/দ্বিতীয় সন্তানের শিক্ষা ভাতা প্রাপ্তির আবেদন',
+    shortTitle: 'শিক্ষা ভাতা',
+    category: 'employee',
+    description: 'সন্তানের লেখাপড়ার জন্য সরকারি বিধি অনুযায়ী প্রথম বা দ্বিতীয় সন্তানের শিক্ষা ভাতা মঞ্জুর ও ই-পেমেন্টের আবেদনপত্র।',
+    badge: 'চাকরিজীবী',
+    iconName: 'Coins',
+    defaultRecipient: 'প্রধান শিক্ষক',
+    defaultThrough: 'যথাযথ কর্তৃপক্ষ',
+    defaultSubject: 'প্রথম/দ্বিতীয় সন্তানের শিক্ষা ভাতা প্রাপ্তির জন্য আবেদন।',
+    recipientOptions: TEACHER_RECIPIENTS,
+    designationOptions: TEACHER_DESIGNATIONS,
+    throughOptions: TEACHER_THROUGH_OPTIONS,
+    fields: [
+      {
+        key: 'childSerial',
+        label: 'সন্তানের ক্রম',
+        type: 'select',
+        options: ['প্রথম', 'দ্বিতীয়'],
+        defaultValue: 'প্রথম',
+        required: true,
+      },
+      {
+        key: 'childName',
+        label: 'সন্তানের নাম',
+        type: 'text',
+        placeholder: 'যেমন: তাসনিম আক্তার',
+        required: true,
+      },
+      {
+        key: 'childClass',
+        label: 'সন্তানের বর্তমান শ্রেণি ও প্রতিষ্ঠান',
+        type: 'text',
+        placeholder: 'যেমন: ৬ষ্ঠ শ্রেণি, বিয়ানীবাজার সরকারি উচ্চ বিদ্যালয়',
+        defaultValue: '৬ষ্ঠ শ্রেণি, বিয়ানীবাজার সরকারি উচ্চ বিদ্যালয়',
+        required: true,
+      },
+      {
+        key: 'childDateOfBirth',
+        label: 'সন্তানের জন্ম তারিখ',
+        type: 'text',
+        placeholder: 'যেমন: ১০ মার্চ ২০১৪',
+        defaultValue: '১০ মার্চ ২০১৪',
+        required: true,
+      },
+      {
+        key: 'childBirthCertificateNo',
+        label: 'জন্মনিবন্ধন সনদের নম্বর',
+        type: 'text',
+        placeholder: 'যেমন: ১৯৯৬ ৩১২০ ০০০০ ০১২৩৪',
+      },
+      {
+        key: 'allowanceBankInfo',
+        label: 'বেতন হিসাবের ব্যাংক ও হিসাব নম্বর',
+        type: 'text',
+        placeholder: 'যেমন: সোনালী ব্যাংক, হিসাব নং: ০১২৩৪৫৬৭৮৯০১২',
+      },
+      {
+        key: 'attachments',
+        label: 'সংযুক্তি',
+        type: 'text',
+        defaultValue: 'সন্তানের জন্মনিবন্ধন সনদ, প্রতিষ্ঠানের শিক্ষার্থী/উপস্থিতি প্রত্যয়নপত্র ও সর্বশেষ পরীক্ষার ফলাফল',
+      },
+    ],
+  },
 
   // --- PART 2: Student Templates ---
   {
@@ -524,6 +590,12 @@ export function getSampleFormData(template: FormatTemplate): ApplicationFormData
     destinationCountry: 'সৌদি আরব',
     exBangladeshPurpose: 'পবিত্র হজ্ব ও ওমরাহ পালন',
     weddingDate: '২০ নভেম্বর ২০২৬',
+    childSerial: 'প্রথম',
+    childName: 'তাসনিম আক্তার',
+    childClass: '৬ষ্ঠ শ্রেণি, বিয়ানীবাজার সরকারি উচ্চ বিদ্যালয়',
+    childDateOfBirth: '১০ মার্চ ২০১৪',
+    childBirthCertificateNo: '১৯৯৬ ৩১২০ ০০০০ ০১২৩৪',
+    allowanceBankInfo: 'সোনালী ব্যাংক, হিসাব নং: ০১২৩৪৫৬৭৮৯০১২',
   };
 
   for (const field of template.fields) {
@@ -578,6 +650,13 @@ export function getDefaultFormData(template: FormatTemplate): ApplicationFormDat
     destinationCountry: '',
     exBangladeshPurpose: '',
     weddingDate: '',
+
+    childSerial: 'প্রথম',
+    childName: '',
+    childClass: '',
+    childDateOfBirth: '',
+    childBirthCertificateNo: '',
+    allowanceBankInfo: '',
 
     studentClass: '',
     rollNumber: '',
