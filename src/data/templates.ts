@@ -371,10 +371,18 @@ export const ALL_TEMPLATES: FormatTemplate[] = [
       },
       {
         key: 'childClass',
-        label: 'সন্তানের বর্তমান শ্রেণি ও প্রতিষ্ঠান',
+        label: 'সন্তানের বর্তমান শ্রেণি',
         type: 'text',
-        placeholder: 'যেমন: ৬ষ্ঠ শ্রেণি, বিয়ানীবাজার সরকারি উচ্চ বিদ্যালয়',
-        defaultValue: '৬ষ্ঠ শ্রেণি, বিয়ানীবাজার সরকারি উচ্চ বিদ্যালয়',
+        placeholder: 'যেমন: ৬ষ্ঠ শ্রেণি',
+        defaultValue: '৬ষ্ঠ শ্রেণি',
+        required: true,
+      },
+      {
+        key: 'childSchoolName',
+        label: 'সন্তানের অধ্যয়নরত বিদ্যালয়ের নাম',
+        type: 'text',
+        placeholder: 'যেমন: বিয়ানীবাজার সরকারি উচ্চ বিদ্যালয়',
+        defaultValue: 'বিয়ানীবাজার সরকারি উচ্চ বিদ্যালয়',
         required: true,
       },
       {
@@ -396,8 +404,9 @@ export const ALL_TEMPLATES: FormatTemplate[] = [
       {
         key: 'attachments',
         label: 'সংযুক্তি',
-        type: 'text',
-        defaultValue: 'সন্তানের জন্মনিবন্ধন সনদ, প্রতিষ্ঠানের শিক্ষার্থী/উপস্থিতি প্রত্যয়নপত্র ও সর্বশেষ পরীক্ষার ফলাফল',
+        type: 'textarea',
+        helperText: 'প্রতিটি সংযুক্তি আলাদা লাইনে লিখুন — কাগজে নম্বরসহ তালিকা হয়ে বসবে।',
+        defaultValue: '১। সন্তানের জন্মনিবন্ধন সনদের কপি\n২। প্রতিষ্ঠানের শিক্ষার্থী/উপস্থিতি প্রত্যয়নপত্র\n৩। সর্বশেষ পরীক্ষার ফলাফলের কপি',
       },
     ],
   },
@@ -603,7 +612,8 @@ export function getSampleFormData(template: FormatTemplate): ApplicationFormData
     weddingDate: '২০ নভেম্বর ২০২৬',
     childSerial: 'প্রথম',
     childName: 'তাসনিম আক্তার',
-    childClass: '৬ষ্ঠ শ্রেণি, বিয়ানীবাজার সরকারি উচ্চ বিদ্যালয়',
+    childClass: '৬ষ্ঠ শ্রেণি',
+    childSchoolName: 'বিয়ানীবাজার সরকারি উচ্চ বিদ্যালয়',
     childDateOfBirth: '১০ মার্চ ২০১৪',
     childBirthCertificateNo: '১৯৯৬ ৩১২০ ০০০০ ০১২৩৪',
   };
@@ -664,6 +674,7 @@ export function getDefaultFormData(template: FormatTemplate): ApplicationFormDat
     childSerial: 'প্রথম',
     childName: '',
     childClass: '',
+    childSchoolName: '',
     childDateOfBirth: '',
     childBirthCertificateNo: '',
 

@@ -19,6 +19,24 @@ import {
 /** 210mm at 96dpi — the fixed width of the A4 preview sheet below. */
 const A4_WIDTH_PX = 794;
 
+/**
+ * Attachments are typed one per line. A single line is printed as it is; several
+ * lines become a Bangla-numbered list, and a line the writer already numbered
+ * keeps its own number instead of getting a second one.
+ */
+function formatAttachmentList(raw: string): string {
+  const lines = raw
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  if (lines.length <= 1) return lines[0] || '';
+  return lines
+    .map((line, index) =>
+      /^[০-৯0-9]+\s*[।.)\-]/.test(line) ? line : `${toBanglaNumber(index + 1)}। ${line}`,
+    )
+    .join('\n');
+}
+
 interface DocumentPreviewProps {
   template: FormatTemplate;
   formData: ApplicationFormData;
@@ -207,11 +225,12 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
       case 'education_allowance': {
         const serial = getVal(formData.childSerial, 'প্রথম');
         const child = getVal(formData.childName, '[সন্তানের নাম]');
-        const childClass = getVal(formData.childClass, '[শ্রেণি ও প্রতিষ্ঠানের নাম]');
+        const childClass = getVal(formData.childClass, '[শ্রেণি]');
+        const childSchool = getVal(formData.childSchoolName, '[বিদ্যালয়ের নাম]');
         const dob = formData.childDateOfBirth ? toBanglaDate(formData.childDateOfBirth) : '[জন্ম তারিখ]';
         const birthCert = toBanglaNumber(getVal(formData.childBirthCertificateNo, '[জন্মনিবন্ধন সনদের নম্বর]'));
         return {
-          mainBody: `সবিনয় নিবেদন এই যে, আমি নিম্নস্বাক্ষরকারী ${cleanWorkplace}, ${cleanUpazila}, ${cleanDistrict} এর ${desig}। সরকারি বিধি মোতাবেক আমার ${serial} সন্তান ${child} (জন্ম তারিখ: ${dob}, জন্মনিবন্ধন সনদ নং: ${birthCert}) বর্তমানে ${childClass}-এ অধ্যয়নরত আছে। উক্ত সন্তানের লেখাপড়ার ব্যয় নির্বাহের জন্য সরকারি বিধি অনুযায়ী শিক্ষা ভাতা প্রাপ্তির জন্য আমি আবেদন করছি।`,
+          mainBody: `সবিনয় নিবেদন এই যে, আমি নিম্নস্বাক্ষরকারী ${cleanWorkplace}, ${cleanUpazila}, ${cleanDistrict} এর ${desig}। সরকারি বিধি মোতাবেক আমার ${serial} সন্তান ${child} (জন্ম তারিখ: ${dob}, জন্মনিবন্ধন সনদ নং: ${birthCert}) বর্তমানে ${childSchool}-এর ${childClass}-এ অধ্যয়নরত আছে। উক্ত সন্তানের লেখাপড়ার ব্যয় নির্বাহের জন্য সরকারি বিধি অনুযায়ী শিক্ষা ভাতা প্রাপ্তির জন্য আমি আবেদন করছি।`,
           prayerText: `অতএব, মহোদয় সমীপে বিনীত প্রার্থনা, আমার ${serial} সন্তানের জন্য সরকারি বিধি অনুযায়ী শিক্ষা ভাতা মঞ্জুরপূর্বক নিয়মিত পরিশোধের সদয় ব্যবস্থা গ্রহণে আপনার মর্জি হয়।`,
         };
       }
@@ -669,11 +688,15 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
                 </div>
               </div>
 
-              {/* 9. Attachments (সংযুক্তি) if any - Left Aligned */}
+              {/* 9. Attachments (সংযুক্তি) if any. No rule and no side padding: the
+                  list must sit on the same margin as the rest of the paper, and a
+                  horizontal rule there printed as a stray line under the sign-off. */}
               {formData.attachments && (
-                <div className="mt-8 pt-4 border-t border-slate-300 text-left font-sans-bn text-slate-800 space-y-1">
-                  <div className="font-bold text-slate-950">সংযুক্তি:</div>
-                  <div className="text-left">{formData.attachments}</div>
+                <div className="mt-6 text-left text-black space-y-1">
+                  <div className="font-bold">সংযুক্তি:</div>
+                  <div className="text-left whitespace-pre-line">
+                    {formatAttachmentList(formData.attachments)}
+                  </div>
                 </div>
               )}
 
