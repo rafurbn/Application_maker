@@ -37,6 +37,10 @@ export interface Heartbeat {
   perTemplate: Record<string, number>;
 }
 
+export interface HeartbeatOptions {
+  keepalive?: boolean;
+}
+
 export interface AdminStats {
   liveUsers: number;
   usersToday: number;
@@ -49,33 +53,65 @@ export interface AdminStats {
 
 const TITLE_FALLBACK = 'অজানা ফরম্যাট';
 
-export async function sendHeartbeat(payload: Heartbeat): Promise<boolean> {
+export async function sendHeartbeat(payload: Heartbeat, options?: HeartbeatOptions): Promise<boolean> {
   if (!isRemoteAnalyticsEnabled || !SUPABASE_URL || !SUPABASE_ANON_KEY) return false;
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
+  const keepalive = Boolean(options?.keepalive);
+  const headers = {
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+    'Content-Type': 'application/json',
+  };
+
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/app_activity`, {
+    // Use SECURITY DEFINER RPC so repeat upserts succeed without exposing SELECT RLS to anon.
+    const rpcRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/record_heartbeat`, {
       method: 'POST',
-      headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        'Content-Type': 'application/json',
-        Prefer: 'resolution=merge-duplicates,return=minimal',
-      },
+      headers,
       body: JSON.stringify({
-        uid: payload.uid,
-        day: payload.day,
-        day_generations: payload.dayGenerations,
-        last_template_id: payload.templateId,
-        last_template_title: payload.templateTitle || TITLE_FALLBACK,
-        last_category: payload.category,
-        total_generations: payload.totalGenerations,
-        per_template: payload.perTemplate,
+        p_uid: payload.uid,
+        p_day: payload.day,
+        p_day_generations: payload.dayGenerations,
+        p_total_generations: payload.totalGenerations,
+        p_per_template: payload.perTemplate,
+        p_last_template_id: payload.templateId || null,
+        p_last_template_title: payload.templateTitle || TITLE_FALLBACK,
+        p_last_category: payload.category,
       }),
+      keepalive,
       signal: controller.signal,
     });
-    return res.ok;
+
+    if (rpcRes.ok) return true;
+
+    // Fallback for projects that haven't applied 0002_record_heartbeat.sql yet.
+    if (rpcRes.status === 404) {
+      console.warn('record_heartbeat RPC missing; apply supabase/migrations/0002_record_heartbeat.sql');
+      const legacyRes = await fetch(`${SUPABASE_URL}/rest/v1/app_activity`, {
+        method: 'POST',
+        headers: {
+          ...headers,
+          Prefer: 'resolution=merge-duplicates,return=minimal',
+        },
+        body: JSON.stringify({
+          uid: payload.uid,
+          day: payload.day,
+          day_generations: payload.dayGenerations,
+          last_template_id: payload.templateId,
+          last_template_title: payload.templateTitle || TITLE_FALLBACK,
+          last_category: payload.category,
+          total_generations: payload.totalGenerations,
+          per_template: payload.perTemplate,
+        }),
+        keepalive,
+        signal: controller.signal,
+      });
+      return legacyRes.ok;
+    }
+
+    return false;
   } catch (err) {
     console.error('Analytics heartbeat skipped', err);
     return false;
@@ -119,13 +155,7 @@ export async function fetchAdminStats(token: string): Promise<AdminStats> {
   } catch {
     throw networkFailure();
   }
-  if (!res.ok && res.status !== 401 && res.status !== 403 && res.status >= 500) {
-    throw networkFailure();
-  }
   if (res.status === 401 || res.status === 403) throw new Error('ভুল অ্যাডমিন টোকেন।');
-  if (res.status === 404) {
-    throw new Error('admin-stats ফাংশন পাওয়া যায়নি — supabase functions deploy admin-stats করুন।');
-  }
   if (res.status === 404) {
     throw new Error('admin-stats ফাংশন পাওয়া যায়নি — supabase functions deploy admin-stats করুন।');
   }
@@ -136,7 +166,7 @@ export async function fetchAdminStats(token: string): Promise<AdminStats> {
     } catch {
       detail = '';
     }
-    throw new Error(detail || `পরিসংখ্যান আনা যায়নি (HTTP ${res.status})।`);
+    throw new Error(detail || `সার্ভার থেকে পরিসংখ্যান আনা যায়নি (HTTP ${res.status})।`);
   }
   return (await res.json()) as AdminStats;
 }

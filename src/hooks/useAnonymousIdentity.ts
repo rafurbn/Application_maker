@@ -34,6 +34,9 @@ export function useAnonymousIdentity() {
   const [stats, setStats] = useState<LocalStats>(EMPTY_STATS);
   const [lastHeartbeatAt, setLastHeartbeatAt] = useState<number | null>(null);
   const statsRef = useRef<LocalStats>(EMPTY_STATS);
+  const identityRef = useRef('');
+  const dirtyRef = useRef(false);
+  const lastBeatTriggerRef = useRef(0);
 
   const persist = useCallback((next: LocalStats) => {
     statsRef.current = next;
@@ -45,8 +48,45 @@ export function useAnonymousIdentity() {
     }
   }, []);
 
+  const beat = useCallback((options?: { force?: boolean; keepalive?: boolean }) => {
+    const uid = identityRef.current;
+    if (!uid || !isRemoteAnalyticsEnabled) return;
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+
+    const now = Date.now();
+    if (!options?.force && !dirtyRef.current && now - lastBeatTriggerRef.current < 2000) {
+      return;
+    }
+    lastBeatTriggerRef.current = now;
+
+    const snapshot = statsRef.current;
+    const top = Object.entries(snapshot.perTemplate).sort((a, b) => b[1].count - a[1].count)[0];
+    const currentDay = today();
+    void sendHeartbeat(
+      {
+        uid,
+        day: currentDay,
+        dayGenerations: snapshot.perDay[currentDay] || 0,
+        templateId: top ? top[0] : '',
+        templateTitle: top ? top[1].title : '',
+        category: top ? top[1].category : 'employee',
+        totalGenerations: snapshot.totalGenerations,
+        perTemplate: Object.fromEntries(
+          Object.entries(snapshot.perTemplate).map(([id, v]) => [id, v.count]),
+        ),
+      },
+      { keepalive: options?.keepalive },
+    ).then((ok) => {
+      if (ok) {
+        dirtyRef.current = false;
+        setLastHeartbeatAt(Date.now());
+      }
+    });
+  }, []);
+
   useEffect(() => {
     const identity = readIdentity();
+    identityRef.current = identity.uid;
     setIdentityId(identity.uid);
 
     const initial = readStats();
@@ -56,35 +96,35 @@ export function useAnonymousIdentity() {
       : [...initial.daysVisited, today()].slice(-400);
     persist({ ...initial, daysVisited: days });
 
-    const beat = () => {
-      if (document.visibilityState !== 'visible') return;
-      const snapshot = statsRef.current;
-      const top = Object.entries(snapshot.perTemplate).sort((a, b) => b[1].count - a[1].count)[0];
-      void sendHeartbeat({
-        uid: identity.uid,
-        day: today(),
-        dayGenerations: snapshot.perDay[today()] || 0,
-        templateId: top ? top[0] : '',
-        templateTitle: top ? top[1].title : '',
-        category: top ? top[1].category : 'employee',
-        totalGenerations: snapshot.totalGenerations,
-        perTemplate: Object.fromEntries(
-          Object.entries(snapshot.perTemplate).map(([id, v]) => [id, v.count]),
-        ),
-      }).then((ok) => {
-        if (ok) setLastHeartbeatAt(Date.now());
-      });
+    beat({ force: true });
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') beat();
+    }, HEARTBEAT_MS);
+
+    const onVisibleChange = () => {
+      if (document.visibilityState === 'visible') {
+        beat();
+      } else if (dirtyRef.current) {
+        beat({ force: true, keepalive: true });
+      }
+    };
+    const onPageHide = () => {
+      if (dirtyRef.current) beat({ force: true, keepalive: true });
+    };
+    const onOnline = () => {
+      beat({ force: true });
     };
 
-    beat();
-    const interval = setInterval(beat, HEARTBEAT_MS);
-    const onVisible = () => beat();
-    document.addEventListener('visibilitychange', onVisible);
+    document.addEventListener('visibilitychange', onVisibleChange);
+    window.addEventListener('pagehide', onPageHide);
+    window.addEventListener('online', onOnline);
     return () => {
       clearInterval(interval);
-      document.removeEventListener('visibilitychange', onVisible);
+      document.removeEventListener('visibilitychange', onVisibleChange);
+      window.removeEventListener('pagehide', onPageHide);
+      window.removeEventListener('online', onOnline);
     };
-  }, [persist]);
+  }, [beat, persist]);
 
   const trackApplicationGeneration = useCallback(
     (templateId: string, title: string, category: 'employee' | 'student' = 'employee') => {
@@ -100,8 +140,10 @@ export function useAnonymousIdentity() {
         perDay,
         perTemplate: { ...prev.perTemplate, [templateId]: { ...entry, title, count: entry.count + 1 } },
       });
+      dirtyRef.current = true;
+      beat({ force: true, keepalive: true });
     },
-    [persist],
+    [beat, persist],
   );
 
   return {

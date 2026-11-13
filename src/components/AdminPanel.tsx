@@ -83,19 +83,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, localSt
     setSwActive(Boolean(navigator.serviceWorker?.controller));
   }, []);
 
-  useEffect(() => {
-    if (isOpen) {
-      setNeedsSetup(!readStoredPassphrase());
-      loadLocalSnapshot();
-    }
-  }, [isOpen, loadLocalSnapshot]);
-
-  useEffect(() => {
-    if (!isOpen || !isAuthenticated || !isRemoteEnabled) return;
-    const interval = setInterval(loadLocalSnapshot, 30000);
-    return () => clearInterval(interval);
-  }, [isOpen, isAuthenticated, isRemoteEnabled, loadLocalSnapshot]);
-
   const runRemoteFetch = useCallback(async () => {
     if (!isRemoteAnalyticsEnabled) return;
     setRemoteLoading(true);
@@ -111,6 +98,25 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, localSt
     }
   }, []);
 
+  useEffect(() => {
+    if (isOpen) {
+      setNeedsSetup(!readStoredPassphrase());
+      loadLocalSnapshot();
+      if (isAuthenticated && isRemoteEnabled && !isOfflineFallback) {
+        void runRemoteFetch();
+      }
+    }
+  }, [isOpen, isAuthenticated, isRemoteEnabled, isOfflineFallback, loadLocalSnapshot, runRemoteFetch]);
+
+  useEffect(() => {
+    if (!isOpen || !isAuthenticated || !isRemoteEnabled) return;
+    const interval = setInterval(() => {
+      loadLocalSnapshot();
+      if (!isOfflineFallback) void runRemoteFetch();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [isOpen, isAuthenticated, isRemoteEnabled, isOfflineFallback, loadLocalSnapshot, runRemoteFetch]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const value = passwordInput.trim();
@@ -124,6 +130,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, localSt
         sessionStorage.setItem('admin_session_token', value);
         const stats = await fetchAdminStats(value);
         setRemoteStats(stats);
+        setIsOfflineFallback(false);
         setIsAuthenticated(true);
         setLoginError('');
         loadLocalSnapshot();
@@ -418,7 +425,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, localSt
               </div>
               <div className="hidden sm:flex items-center gap-1 text-slate-600">
                 <span>• লগইন ছাড়া ফেজ ১</span>
-                <span>• A4 মার্জিন ২২/৩৫ মিমি</span>
+                <span>• A4 মার্জিন ৩০/২৫/২০ মিমি</span>
               </div>
             </div>
 
