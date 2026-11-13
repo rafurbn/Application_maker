@@ -237,7 +237,7 @@ export const ApplicationForm: React.FC<ApplicationFormProps> = ({
                 type="text"
                 value={formData.applicantName}
                 onChange={(e) => onChange({ applicantName: e.target.value })}
-                placeholder="যেমন: আমিনা বেগম"
+                placeholder=""
                 className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm text-slate-800 focus:ring-2 focus:ring-emerald-600 focus:outline-hidden"
               />
             </div>
