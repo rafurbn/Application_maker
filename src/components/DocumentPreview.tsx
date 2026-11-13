@@ -230,8 +230,8 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         const dob = formData.childDateOfBirth ? toBanglaDate(formData.childDateOfBirth) : '[জন্ম তারিখ]';
         const birthCert = toBanglaNumber(getVal(formData.childBirthCertificateNo, '[জন্মনিবন্ধন সনদের নম্বর]'));
         return {
-          mainBody: `সবিনয় নিবেদন এই যে, আমি নিম্নস্বাক্ষরকারী ${cleanWorkplace}, ${cleanUpazila}, ${cleanDistrict} এর ${desig}। সরকারি বিধি মোতাবেক আমার ${serial} সন্তান ${child} (জন্ম তারিখ: ${dob}, জন্মনিবন্ধন সনদ নং: ${birthCert}) বর্তমানে ${childSchool}-এর ${childClass}-তে অধ্যয়নরত আছে। উক্ত সন্তানের লেখাপড়ার ব্যয় নির্বাহের জন্য সরকারি বিধি অনুযায়ী শিক্ষা ভাতা প্রাপ্তির জন্য মহোদয় বরাবরে আমি বিনীত আবেদন করছি।`,
-          prayerText: `অতএব, মহোদয় সমীপে বিনীত প্রার্থনা, আমার ${serial} সন্তানের জন্য সরকারি বিধি মোতাবেক শিক্ষা ভাতা মঞ্জুরীর জন্য প্রয়োজনীয় ব্যবস্থা গ্রহণ করতে আপনার সদয় মর্জি হয়।`,
+          mainBody: `সবিনয় নিবেদন এই যে, আমি নিম্নস্বাক্ষরকারী ${cleanWorkplace}, ${cleanUpazila}, ${cleanDistrict} এর ${desig}। সরকারি বিধি মোতাবেক আমার ${serial} সন্তান ${child} (জন্ম তারিখ: ${dob}, জন্মনিবন্ধন সনদ নং: ${birthCert}) বর্তমানে ${childSchool}-এর ${childClass}-তে অধ্যয়নরত আছে। উক্ত সন্তানের লেখাপড়ার ব্যয় নির্বাহের জন্য সরকারি বিধি মোতাবেক শিক্ষা ভাতা প্রাপ্তির জন্য মহোদয় সমীপে আমি বিনীত আবেদন করছি।`,
+          prayerText: `অতএব, মহোদয় সমীপে বিনীত প্রার্থনা, আমার ${serial} সন্তানের জন্য সরকারি বিধি মোতাবেক শিক্ষা ভাতা মঞ্জুরীর প্রয়োজনীয় ব্যবস্থা গ্রহণে আপনার সদয় মর্জি হয়।`,
         };
       }
 
